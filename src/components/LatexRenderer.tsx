@@ -1,5 +1,6 @@
 import React from 'react';
 import katex from 'katex';
+import { CircuitDiagram } from './diagrams/CircuitDiagrams';
 
 interface MathViewProps {
   math: string;
@@ -148,6 +149,45 @@ export const LatexRenderer: React.FC<LatexRendererProps> = ({ content, className
 
     if (inCodeBlock) {
       codeBlockLines.push(rawLine);
+      i++;
+      continue;
+    }
+
+    // Check markdown image: ![Alt Text](url)
+    const imgMatch = line.match(/^!\[(.*?)\]\((.*?)\)$/);
+    if (imgMatch) {
+      if (inTable) flushTable(i);
+      const altText = imgMatch[1];
+      const imgUrl = imgMatch[2];
+      
+      if (imgUrl.startsWith('diagram:')) {
+        const diagramId = imgUrl.replace('diagram:', '').trim();
+        elements.push(
+          <div key={`diagram-${i}`} className="my-5">
+            <CircuitDiagram id={diagramId} caption={altText} />
+          </div>
+        );
+        i++;
+        continue;
+      }
+
+      elements.push(
+        <figure key={`img-${i}`} className="my-5 p-3 bg-[#f8fafc] dark:bg-[#131b2e] border border-[#e2e8f0] dark:border-[#1e293b] rounded-3xl overflow-hidden shadow-xs">
+          <div className="flex justify-center bg-white dark:bg-[#0b0f19] p-4 rounded-2xl border border-[#e2e8f0]/80 dark:border-[#1e293b]">
+            <img 
+              src={imgUrl} 
+              alt={altText} 
+              className="max-h-80 w-auto object-contain rounded-xl hover:scale-[1.02] transition-transform duration-200"
+              loading="lazy"
+            />
+          </div>
+          {altText && (
+            <figcaption className="mt-2.5 text-center text-xs font-mono font-medium text-[#64748b] dark:text-[#94a3b8]">
+              📷 ภาพประกอบ: {altText}
+            </figcaption>
+          )}
+        </figure>
+      );
       i++;
       continue;
     }

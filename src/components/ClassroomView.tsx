@@ -24,6 +24,7 @@ import {
 import { WaterTank3D } from './three/WaterTank3D';
 import { KMapTorus3D } from './three/KMapTorus3D';
 import { LogicGate3D } from './three/LogicGate3D';
+import { LessonVisualizerSelector } from './visualizers/LessonVisualizerSelector';
 
 export const ClassroomView: React.FC = () => {
   const { 
@@ -252,6 +253,7 @@ export const ClassroomView: React.FC = () => {
                           return (
                             <button
                               key={l.id}
+                              data-lesson-id={l.id}
                               onClick={() => setSelectedLessonId(l.id)}
                               className={`w-full text-left p-2.5 rounded-xl text-xs transition flex items-center justify-between cursor-pointer ${
                                 active 
@@ -328,6 +330,9 @@ export const ClassroomView: React.FC = () => {
               </div>
             </div>
           </div>
+
+          {/* Interactive Visualizer & Illustrated Sandbox for Current Lesson */}
+          <LessonVisualizerSelector lessonId={currentLesson.id} />
 
           {/* Detailed Lesson Sections */}
           <div className="space-y-6">

@@ -1,0 +1,13 @@
+node_modules/
+dist/
+dist-ssr/
+*.local
+*.log
+.DS_Store
+
+# Scratch / extraction scripts
+extract-slides.mjs
+extract-slides.cjs
+analyze-curriculum.cjs
+Digital Logic Slide/*_text.txt
+slides_analysis.json

@@ -1,0 +1,7 @@
+{
+  "target": "antigravity",
+  "mode": "agent",
+  "git": {
+    "commitPolicy": "ask"
+  }
+}

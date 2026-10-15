@@ -550,10 +550,10 @@ export const DashboardView: React.FC = () => {
               </div>
               <div>
                 <h3 className="font-heading text-lg text-[#0f172a] dark:text-[#f8fafc] font-bold">
-                  จำลองสอบ Final 30 ข้อ
+                  คลังข้อสอบ Final 100 ข้อ
                 </h3>
                 <p className="text-xs text-[#64748b] dark:text-[#94a3b8]">
-                  จับเวลา 45 นาที พร้อมวิเคราะห์จุดอ่อน
+                  ครบชุดใบงาน 7-11 และสไลด์ อ.ปวีณ ม.แม่โจ้
                 </p>
               </div>
             </div>

@@ -95,8 +95,8 @@ export const QuickSearchModal: React.FC<QuickSearchModalProps> = ({ isOpen, onCl
     {
       id: 'exam_sim',
       type: 'exam',
-      title: 'ข้อสอบจำลอง Final 30 ข้อ จับเวลาจริง',
-      subtitle: 'แนวข้อสอบ 30 ข้อ ครอบคลุม Ch.3, Ch.4, Ch.5 พร้อมเฉลยละเอียดทุกข้อ',
+      title: 'คลังข้อสอบจำลอง Final 100 ข้อ จับเวลาจริง',
+      subtitle: 'แนวข้อสอบ 100 ข้อ ครบชุดใบงาน 7-11 และสไลด์ Ch.3, Ch.4, Ch.5 พร้อมเฉลยละเอียด',
       badge: 'Exam Mode',
       tab: 'exam',
     },

@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { CURRICULUM_DATA } from '../data/curriculumData';
 import { 
-  Cpu, 
   LayoutDashboard, 
   BookOpen, 
   Sliders, 
@@ -29,7 +28,6 @@ export const Header: React.FC = () => {
   } = useApp();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // If in theater mode and in classroom, hide the entire header to provide distraction-free focus!
   if (theaterMode && currentTab === 'classroom') {
     return null;
   }
@@ -46,25 +44,28 @@ export const Header: React.FC = () => {
   ];
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-slate-800 bg-slate-950/90 backdrop-blur-md transition-colors dark:border-slate-800 dark:bg-slate-950/90">
+    <header className="sticky top-0 z-40 w-full border-b border-[#e6dfd8] dark:border-[#252320] bg-[#faf9f5]/95 dark:bg-[#181715]/95 backdrop-blur-md transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           
-          {/* Logo & Course Info */}
+          {/* Claude Inspired Wordmark with Asterism Glyph */}
           <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setCurrentTab('dashboard')}>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-600 via-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-cyan-500/20 ring-1 ring-white/20">
-              <Cpu className="w-5 h-5 text-white animate-pulse" />
+            <div className="w-9 h-9 rounded-lg bg-[#cc785c] text-white flex items-center justify-center shadow-sm">
+              {/* Anthropic Radial Spike Glyph */}
+              <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                <path d="M12 2L14.2 9.8L22 12L14.2 14.2L12 22L9.8 14.2L2 12L9.8 9.8L12 2Z" />
+              </svg>
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="font-bold text-lg text-slate-100 tracking-tight flex items-center gap-1.5">
+                <span className="font-serif text-xl font-normal text-[#141413] dark:text-[#faf9f5] tracking-tight flex items-center gap-1.5">
                   LogicMaster
-                  <span className="text-xs px-1.5 py-0.5 rounded font-mono font-medium bg-cyan-950 text-cyan-400 border border-cyan-800/60">
+                  <span className="text-xs px-2 py-0.5 rounded-full font-mono font-medium bg-[#efe9de] dark:bg-[#252320] text-[#cc785c] border border-[#e6dfd8] dark:border-[#252320]">
                     CS121
                   </span>
                 </span>
               </div>
-              <p className="text-xs text-slate-400 hidden sm:block">Digital Logic Final Prep | แม่โจ้ (MJU)</p>
+              <p className="text-xs text-[#6c6a64] dark:text-[#8e8b82] hidden sm:block">Digital Logic Final Prep | แม่โจ้ (MJU)</p>
             </div>
           </div>
 
@@ -76,19 +77,19 @@ export const Header: React.FC = () => {
                 <button
                   key={item.id}
                   onClick={() => setCurrentTab(item.id)}
-                  className={`relative px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-1.5 ${
+                  className={`relative px-3.5 py-2 rounded-lg text-xs font-medium transition-all duration-150 flex items-center space-x-1.5 ${
                     active 
-                      ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 shadow-sm shadow-cyan-500/10' 
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                      ? 'bg-[#efe9de] dark:bg-[#252320] text-[#cc785c] font-semibold border border-[#e6dfd8] dark:border-[#3d3d3a]' 
+                      : 'text-[#6c6a64] dark:text-[#a09d96] hover:text-[#141413] dark:hover:text-[#faf9f5] hover:bg-[#f5f0e8] dark:hover:bg-[#1f1e1b]'
                   }`}
                 >
                   {item.icon}
                   <span>{item.label}</span>
                   {item.badge && (
-                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-medium ${
-                      item.id === 'cheatsheet' 
-                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' 
-                        : 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                    <span className={`text-xs px-1.5 py-0.2 rounded-full font-mono ${
+                      active 
+                        ? 'bg-[#cc785c] text-white' 
+                        : 'bg-[#efe9de] dark:bg-[#252320] text-[#cc785c]'
                     }`}>
                       {item.badge}
                     </span>
@@ -102,27 +103,27 @@ export const Header: React.FC = () => {
           <div className="flex items-center space-x-3">
             {/* Auto-save Status Pill */}
             {lastSavedTime && (
-              <div className="hidden lg:flex items-center space-x-1.5 text-xs text-slate-400 bg-slate-900/80 border border-slate-800 px-2.5 py-1 rounded-full">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                <span>บันทึกอัตโนมัติ {lastSavedTime}</span>
+              <div className="hidden lg:flex items-center space-x-1.5 text-xs text-[#6c6a64] dark:text-[#8e8b82] bg-[#f5f0e8] dark:bg-[#1f1e1b] border border-[#e6dfd8] dark:border-[#252320] px-2.5 py-1 rounded-full">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#5db872]" />
+                <span className="font-mono text-xs">บันทึก {lastSavedTime}</span>
               </div>
             )}
 
-            {/* Course Progress Mini Pill */}
+            {/* Course Progress Pill */}
             <div 
               onClick={() => setCurrentTab('dashboard')} 
-              className="flex items-center space-x-2 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg cursor-pointer hover:border-slate-700 transition"
+              className="flex items-center space-x-2 bg-[#f5f0e8] dark:bg-[#1f1e1b] border border-[#e6dfd8] dark:border-[#252320] px-3 py-1.5 rounded-lg cursor-pointer hover:border-[#cc785c]/40 transition"
               title={`${completedLessons.length}/${totalLessons} บทเรียนที่เรียนจบ`}
             >
-              <div className="w-4 h-4 text-emerald-400 flex items-center justify-center">
+              <div className="w-4 h-4 text-[#5db872] flex items-center justify-center">
                 <CheckCircle2 className="w-4 h-4" />
               </div>
-              <div className="text-xs font-mono font-semibold text-slate-200">
+              <div className="text-xs font-mono font-semibold text-[#141413] dark:text-[#faf9f5]">
                 {progressPercent}%
               </div>
-              <div className="w-12 h-1.5 bg-slate-800 rounded-full overflow-hidden hidden sm:block">
+              <div className="w-12 h-1.5 bg-[#e6dfd8] dark:bg-[#252320] rounded-full overflow-hidden hidden sm:block">
                 <div 
-                  className="h-full bg-gradient-to-r from-cyan-500 to-emerald-500 rounded-full transition-all duration-500" 
+                  className="h-full bg-[#cc785c] rounded-full transition-all duration-500" 
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
@@ -131,16 +132,16 @@ export const Header: React.FC = () => {
             {/* Dark / Light Toggle */}
             <button
               onClick={() => setDarkMode(prev => !prev)}
-              className="p-2 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-900 border border-slate-800 transition"
-              title={darkMode ? 'สลับเป็นโหมดสว่าง' : 'สลับเป็นโหมดมืด'}
+              className="p-2 rounded-lg text-[#6c6a64] dark:text-[#a09d96] hover:text-[#141413] dark:hover:text-[#faf9f5] hover:bg-[#f5f0e8] dark:hover:bg-[#1f1e1b] border border-[#e6dfd8] dark:border-[#252320] transition"
+              title={darkMode ? 'สลับเป็นโหมดสว่าง (Cream Canvas)' : 'สลับเป็นโหมดมืด (Dark Navy)'}
             >
-              {darkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-300" />}
+              {darkMode ? <Sun className="w-4 h-4 text-[#e8a55a]" /> : <Moon className="w-4 h-4 text-[#6c6a64]" />}
             </button>
 
             {/* Mobile Menu Toggle */}
             <button
               onClick={() => setMobileMenuOpen(prev => !prev)}
-              className="md:hidden p-2 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-900 border border-slate-800 transition"
+              className="md:hidden p-2 rounded-lg text-[#6c6a64] dark:text-[#a09d96] hover:bg-[#f5f0e8] dark:hover:bg-[#1f1e1b] border border-[#e6dfd8] dark:border-[#252320] transition"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -148,9 +149,9 @@ export const Header: React.FC = () => {
         </div>
       </div>
 
-      {/* Mobile Drawer Menu */}
+      {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-slate-800 bg-slate-950 px-4 pt-2 pb-4 space-y-1">
+        <div className="md:hidden border-t border-[#e6dfd8] dark:border-[#252320] bg-[#faf9f5] dark:bg-[#181715] px-4 pt-2 pb-4 space-y-1">
           {navItems.map(item => (
             <button
               key={item.id}
@@ -158,10 +159,10 @@ export const Header: React.FC = () => {
                 setCurrentTab(item.id);
                 setMobileMenuOpen(false);
               }}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium ${
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium ${
                 currentTab === item.id 
-                  ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30' 
-                  : 'text-slate-400 hover:bg-slate-900 hover:text-slate-200'
+                  ? 'bg-[#efe9de] dark:bg-[#252320] text-[#cc785c] font-semibold' 
+                  : 'text-[#6c6a64] dark:text-[#a09d96] hover:bg-[#f5f0e8] dark:hover:bg-[#1f1e1b]'
               }`}
             >
               <div className="flex items-center space-x-2.5">
@@ -169,7 +170,7 @@ export const Header: React.FC = () => {
                 <span>{item.label}</span>
               </div>
               {item.badge && (
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-800">
+                <span className="text-xs px-2 py-0.5 rounded-full bg-[#efe9de] dark:bg-[#252320] text-[#cc785c]">
                   {item.badge}
                 </span>
               )}

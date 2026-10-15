@@ -25,7 +25,7 @@ const MainContent: React.FC = () => {
 export function App() {
   return (
     <AppProvider>
-      <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 transition-colors selection:bg-cyan-500/30 selection:text-cyan-200">
+      <div className="min-h-screen flex flex-col bg-[#faf9f5] dark:bg-[#181715] text-[#141413] dark:text-[#faf9f5] transition-colors selection:bg-[#cc785c]/30 selection:text-[#141413] dark:selection:text-[#faf9f5]">
         <Header />
         <MainContent />
         <Footer />

@@ -1,16 +1,31 @@
 <!DOCTYPE html>
-<html lang="th" class="dark">
+<html lang="th">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23cc785c'><path d='M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z'/></svg>" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230066cc'><path d='M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z'/></svg>" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LogicMaster | เว็บไซต์เตรียมสอบ Digital Logic Final (CS121)</title>
-    <!-- Google Fonts: Newsreader (Claude Editorial Serif), Prompt (Thai), Inter (UI), JetBrains Mono (Code/Math) -->
+    <title>LogicMaster | Google Stitch Digital Logic Final (CS121)</title>
+    <!-- Google Fonts: Outfit (Google Stitch Modern Sans), Prompt (Thai Sans), JetBrains Mono (Code/Math) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..700;1,400..700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <script>
+      (function() {
+        try {
+          if (localStorage.getItem('LOGICMASTER_THEME') === 'dark') {
+            localStorage.removeItem('LOGICMASTER_THEME');
+          }
+          var theme = localStorage.getItem('LOGICMASTER_THEME_V2');
+          if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
-  <body class="bg-[#181715] text-[#faf9f5] antialiased selection:bg-[#cc785c]/30 selection:text-[#faf9f5] min-h-screen">
+  <body class="bg-[#f8f9fe] dark:bg-[#0b0f19] text-[#0f172a] dark:text-[#f8fafc] antialiased selection:bg-[#0066cc]/20 selection:text-[#0066cc] min-h-screen">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

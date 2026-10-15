@@ -35,7 +35,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [completedLessons, setCompletedLessons] = useState<string[]>([]);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [theaterMode, setTheaterMode] = useState<boolean>(false);
-  const [darkMode, setDarkMode] = useState<boolean>(true);
+  const [darkMode, setDarkMode] = useState<boolean>(() => {
+    try {
+      if (localStorage.getItem('LOGICMASTER_THEME') === 'dark') {
+        localStorage.removeItem('LOGICMASTER_THEME');
+      }
+      const savedTheme = localStorage.getItem('LOGICMASTER_THEME_V2');
+      if (savedTheme === 'dark') return true;
+      if (savedTheme === 'light') return false;
+    } catch (e) {
+      // ignore
+    }
+    return false; // Default: Light / White theme
+  });
   const [examAttempts, setExamAttempts] = useState<ExamAttempt[]>([]);
   const [bookmarkedQuestions, setBookmarkedQuestions] = useState<string[]>([]);
   const [lastSavedTime, setLastSavedTime] = useState<string | null>(null);
@@ -135,12 +147,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCurrentTab('classroom');
   };
 
-  // Sync dark mode with document
+  // Sync dark mode with document and localStorage
   useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
+    try {
+      if (darkMode) {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('LOGICMASTER_THEME_V2', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('LOGICMASTER_THEME_V2', 'light');
+      }
+    } catch (e) {
+      // ignore
     }
   }, [darkMode]);
 

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { CURRICULUM_DATA } from '../data/curriculumData';
+import { QuickSearchModal } from './QuickSearchModal';
 import { 
   LayoutDashboard, 
   BookOpen, 
@@ -12,7 +13,9 @@ import {
   CheckCircle2, 
   Menu, 
   X,
-  Sparkles
+  Search,
+  Cpu,
+  Zap
 } from 'lucide-react';
 import { ActiveTab } from '../types';
 
@@ -27,6 +30,19 @@ export const Header: React.FC = () => {
     theaterMode 
   } = useApp();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  // Global Ctrl+K shortcut for search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setSearchOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   if (theaterMode && currentTab === 'classroom') {
     return null;
@@ -35,149 +51,134 @@ export const Header: React.FC = () => {
   const totalLessons = CURRICULUM_DATA.length;
   const progressPercent = Math.round((completedLessons.length / totalLessons) * 100);
 
-  const navItems: { id: ActiveTab; label: string; icon: React.ReactNode; badge?: string }[] = [
-    { id: 'dashboard', label: 'แดชบอร์ด', icon: <LayoutDashboard className="w-4 h-4" /> },
-    { id: 'classroom', label: 'ห้องเรียน & สรุปเนื้อหา', icon: <BookOpen className="w-4 h-4" /> },
-    { id: 'simulators', label: 'แล็บจำลองวงจร', icon: <Sliders className="w-4 h-4" />, badge: 'Interactive' },
-    { id: 'cheatsheet', label: 'สรุปสูตร A4', icon: <FileText className="w-4 h-4" />, badge: 'พกเข้าห้องสอบ' },
-    { id: 'exam', label: 'จำลองสอบ Final', icon: <GraduationCap className="w-4 h-4" /> },
+  const navItems: { id: ActiveTab; label: string; icon: React.ReactNode }[] = [
+    { id: 'dashboard', label: 'แดชบอร์ด', icon: <LayoutDashboard className="w-3.5 h-3.5" /> },
+    { id: 'classroom', label: 'บทเรียน', icon: <BookOpen className="w-3.5 h-3.5" /> },
+    { id: 'simulators', label: 'แล็บจำลอง', icon: <Sliders className="w-3.5 h-3.5" /> },
+    { id: 'cheatsheet', label: 'สรุปสูตร', icon: <FileText className="w-3.5 h-3.5" /> },
+    { id: 'exam', label: 'สอบจำลอง', icon: <GraduationCap className="w-3.5 h-3.5" /> },
   ];
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-[#e6dfd8] dark:border-[#252320] bg-[#faf9f5]/95 dark:bg-[#181715]/95 backdrop-blur-md transition-colors">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          
-          {/* Claude Inspired Wordmark with Asterism Glyph */}
-          <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setCurrentTab('dashboard')}>
-            <div className="w-9 h-9 rounded-lg bg-[#cc785c] text-white flex items-center justify-center shadow-sm">
-              {/* Anthropic Radial Spike Glyph */}
-              <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                <path d="M12 2L14.2 9.8L22 12L14.2 14.2L12 22L9.8 14.2L2 12L9.8 9.8L12 2Z" />
-              </svg>
-            </div>
-            <div>
+    <>
+      <header className="sticky top-0 z-40 w-full border-b border-[#e2e8f0] dark:border-[#1e293b] bg-white/95 dark:bg-[#0b0f19]/95 backdrop-blur-md transition-colors shadow-2xs">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-15 gap-4">
+            
+            {/* Wordmark and Course Indicator */}
+            <div 
+              className="flex items-center space-x-2.5 cursor-pointer group select-none shrink-0" 
+              onClick={() => setCurrentTab('dashboard')}
+            >
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#0066cc] to-[#7c3aed] text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+                <Cpu className="w-4.5 h-4.5 text-white" />
+              </div>
               <div className="flex items-center space-x-2">
-                <span className="font-serif text-xl font-normal text-[#141413] dark:text-[#faf9f5] tracking-tight flex items-center gap-1.5">
-                  LogicMaster
-                  <span className="text-xs px-2 py-0.5 rounded-full font-mono font-medium bg-[#efe9de] dark:bg-[#252320] text-[#cc785c] border border-[#e6dfd8] dark:border-[#252320]">
+                <span className="font-heading text-lg font-extrabold text-[#0f172a] dark:text-[#f8fafc] tracking-tight flex items-center gap-1.5">
+                  Logic<span className="text-[#0066cc] dark:text-[#38bdf8]">Master</span>
+                  <span className="text-xs px-1.5 py-0.5 rounded-md font-mono font-bold bg-[#0066cc]/10 dark:bg-[#0066cc]/20 text-[#0066cc] dark:text-[#38bdf8] border border-[#0066cc]/20">
                     CS121
                   </span>
                 </span>
               </div>
-              <p className="text-xs text-[#6c6a64] dark:text-[#8e8b82] hidden sm:block">Digital Logic Final Prep | แม่โจ้ (MJU)</p>
             </div>
-          </div>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-1 lg:space-x-1.5">
-            {navItems.map(item => {
-              const active = currentTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setCurrentTab(item.id)}
-                  className={`relative px-3.5 py-2 rounded-lg text-xs font-medium transition-all duration-150 flex items-center space-x-1.5 ${
-                    active 
-                      ? 'bg-[#efe9de] dark:bg-[#252320] text-[#cc785c] font-semibold border border-[#e6dfd8] dark:border-[#3d3d3a]' 
-                      : 'text-[#6c6a64] dark:text-[#a09d96] hover:text-[#141413] dark:hover:text-[#faf9f5] hover:bg-[#f5f0e8] dark:hover:bg-[#1f1e1b]'
-                  }`}
-                >
-                  {item.icon}
-                  <span>{item.label}</span>
-                  {item.badge && (
-                    <span className={`text-xs px-1.5 py-0.2 rounded-full font-mono ${
+            {/* Desktop Navigation: Compact Segmented Control */}
+            <nav className="hidden lg:flex items-center bg-[#f1f5f9] dark:bg-[#131b2e] p-1 rounded-xl border border-[#e2e8f0] dark:border-[#1e293b] gap-1 shadow-inner/5">
+              {navItems.map(item => {
+                const active = currentTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setCurrentTab(item.id)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-150 flex items-center gap-1.5 cursor-pointer select-none ${
                       active 
-                        ? 'bg-[#cc785c] text-white' 
-                        : 'bg-[#efe9de] dark:bg-[#252320] text-[#cc785c]'
-                    }`}>
-                      {item.badge}
+                        ? 'bg-white dark:bg-[#0066cc] text-[#0066cc] dark:text-white shadow-xs font-bold' 
+                        : 'text-[#64748b] dark:text-[#94a3b8] hover:text-[#0f172a] dark:hover:text-[#f8fafc] hover:bg-white/50 dark:hover:bg-white/5'
+                    }`}
+                  >
+                    <span className={active ? 'text-[#0066cc] dark:text-white' : 'text-[#64748b] dark:text-[#94a3b8]'}>
+                      {item.icon}
                     </span>
-                  )}
-                </button>
-              );
-            })}
-          </nav>
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            </nav>
 
-          {/* Right Utilities */}
-          <div className="flex items-center space-x-3">
-            {/* Auto-save Status Pill */}
-            {lastSavedTime && (
-              <div className="hidden lg:flex items-center space-x-1.5 text-xs text-[#6c6a64] dark:text-[#8e8b82] bg-[#f5f0e8] dark:bg-[#1f1e1b] border border-[#e6dfd8] dark:border-[#252320] px-2.5 py-1 rounded-full">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#5db872]" />
-                <span className="font-mono text-xs">บันทึก {lastSavedTime}</span>
-              </div>
-            )}
+            {/* Right Action Tools: Sleek & Essential Only */}
+            <div className="flex items-center gap-2 shrink-0">
+              {/* Quick Search Button (Ctrl+K) */}
+              <button
+                onClick={() => setSearchOpen(true)}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-[#64748b] dark:text-[#94a3b8] bg-[#f8fafc] dark:bg-[#131b2e] hover:bg-[#f1f5f9] dark:hover:bg-[#1e293b] border border-[#e2e8f0] dark:border-[#1e293b] rounded-lg transition cursor-pointer"
+                title="ค้นหาหัวข้อและแล็บด่วน (Ctrl+K)"
+              >
+                <Search className="w-3.5 h-3.5 text-[#0066cc] dark:text-[#38bdf8]" />
+                <span className="hidden sm:inline">ค้นหา</span>
+                <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-xs font-mono bg-white dark:bg-[#0b0f19] rounded border border-[#e2e8f0] dark:border-[#334155] text-[#64748b] dark:text-[#94a3b8]">
+                  ⌘K
+                </kbd>
+              </button>
 
-            {/* Course Progress Pill */}
-            <div 
-              onClick={() => setCurrentTab('dashboard')} 
-              className="flex items-center space-x-2 bg-[#f5f0e8] dark:bg-[#1f1e1b] border border-[#e6dfd8] dark:border-[#252320] px-3 py-1.5 rounded-lg cursor-pointer hover:border-[#cc785c]/40 transition"
-              title={`${completedLessons.length}/${totalLessons} บทเรียนที่เรียนจบ`}
-            >
-              <div className="w-4 h-4 text-[#5db872] flex items-center justify-center">
-                <CheckCircle2 className="w-4 h-4" />
+              {/* Course Progress Pill */}
+              <div 
+                onClick={() => setCurrentTab('dashboard')} 
+                className="hidden sm:flex items-center gap-1.5 bg-[#f8fafc] dark:bg-[#131b2e] border border-[#e2e8f0] dark:border-[#1e293b] px-2.5 py-1.5 rounded-lg cursor-pointer hover:border-[#0066cc]/40 transition text-xs"
+                title={`อ่านจบแล้ว ${completedLessons.length} จาก ${totalLessons} บทเรียน (${progressPercent}%)`}
+              >
+                <CheckCircle2 className="w-3.5 h-3.5 text-[#10b981]" />
+                <span className="font-mono font-bold text-[#0f172a] dark:text-[#f8fafc]">
+                  {progressPercent}%
+                </span>
               </div>
-              <div className="text-xs font-mono font-semibold text-[#141413] dark:text-[#faf9f5]">
-                {progressPercent}%
-              </div>
-              <div className="w-12 h-1.5 bg-[#e6dfd8] dark:bg-[#252320] rounded-full overflow-hidden hidden sm:block">
-                <div 
-                  className="h-full bg-[#cc785c] rounded-full transition-all duration-500" 
-                  style={{ width: `${progressPercent}%` }}
-                />
-              </div>
+
+              {/* Dark / Light Toggle */}
+              <button
+                onClick={() => setDarkMode(prev => !prev)}
+                className="p-1.5 rounded-lg text-[#64748b] dark:text-[#94a3b8] hover:text-[#0f172a] dark:hover:text-[#f8fafc] hover:bg-[#f1f5f9] dark:hover:bg-[#131b2e] border border-[#e2e8f0] dark:border-[#1e293b] transition cursor-pointer"
+                title={darkMode ? 'สลับเป็นโหมดสว่าง' : 'สลับเป็นโหมดมืด'}
+              >
+                {darkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-[#64748b]" />}
+              </button>
+
+              {/* Mobile Menu Toggle */}
+              <button
+                onClick={() => setMobileMenuOpen(prev => !prev)}
+                className="lg:hidden p-1.5 rounded-lg text-[#64748b] dark:text-[#94a3b8] hover:bg-[#f1f5f9] dark:hover:bg-[#131b2e] border border-[#e2e8f0] dark:border-[#1e293b] transition"
+              >
+                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
             </div>
-
-            {/* Dark / Light Toggle */}
-            <button
-              onClick={() => setDarkMode(prev => !prev)}
-              className="p-2 rounded-lg text-[#6c6a64] dark:text-[#a09d96] hover:text-[#141413] dark:hover:text-[#faf9f5] hover:bg-[#f5f0e8] dark:hover:bg-[#1f1e1b] border border-[#e6dfd8] dark:border-[#252320] transition"
-              title={darkMode ? 'สลับเป็นโหมดสว่าง (Cream Canvas)' : 'สลับเป็นโหมดมืด (Dark Navy)'}
-            >
-              {darkMode ? <Sun className="w-4 h-4 text-[#e8a55a]" /> : <Moon className="w-4 h-4 text-[#6c6a64]" />}
-            </button>
-
-            {/* Mobile Menu Toggle */}
-            <button
-              onClick={() => setMobileMenuOpen(prev => !prev)}
-              className="md:hidden p-2 rounded-lg text-[#6c6a64] dark:text-[#a09d96] hover:bg-[#f5f0e8] dark:hover:bg-[#1f1e1b] border border-[#e6dfd8] dark:border-[#252320] transition"
-            >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
           </div>
         </div>
-      </div>
 
-      {/* Mobile Drawer */}
-      {mobileMenuOpen && (
-        <div className="md:hidden border-t border-[#e6dfd8] dark:border-[#252320] bg-[#faf9f5] dark:bg-[#181715] px-4 pt-2 pb-4 space-y-1">
-          {navItems.map(item => (
-            <button
-              key={item.id}
-              onClick={() => {
-                setCurrentTab(item.id);
-                setMobileMenuOpen(false);
-              }}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium ${
-                currentTab === item.id 
-                  ? 'bg-[#efe9de] dark:bg-[#252320] text-[#cc785c] font-semibold' 
-                  : 'text-[#6c6a64] dark:text-[#a09d96] hover:bg-[#f5f0e8] dark:hover:bg-[#1f1e1b]'
-              }`}
-            >
-              <div className="flex items-center space-x-2.5">
+        {/* Mobile Navigation Drawer */}
+        {mobileMenuOpen && (
+          <div className="lg:hidden border-t border-[#e2e8f0] dark:border-[#1e293b] bg-white dark:bg-[#0b0f19] px-4 pt-3 pb-5 space-y-1.5">
+            {navItems.map(item => (
+              <button
+                key={item.id}
+                onClick={() => {
+                  setCurrentTab(item.id);
+                  setMobileMenuOpen(false);
+                }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition ${
+                  currentTab === item.id 
+                    ? 'bg-[#0066cc] text-white font-bold shadow-sm' 
+                    : 'text-[#475569] dark:text-[#94a3b8] hover:bg-[#f1f5f9] dark:hover:bg-[#1e293b]'
+                }`}
+              >
                 {item.icon}
                 <span>{item.label}</span>
-              </div>
-              {item.badge && (
-                <span className="text-xs px-2 py-0.5 rounded-full bg-[#efe9de] dark:bg-[#252320] text-[#cc785c]">
-                  {item.badge}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-      )}
-    </header>
+              </button>
+            ))}
+          </div>
+        )}
+      </header>
+
+      {/* Quick Search Modal */}
+      <QuickSearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+    </>
   );
 };

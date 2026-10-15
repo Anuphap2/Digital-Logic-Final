@@ -11,8 +11,12 @@ import {
   Check, 
   Droplets, 
   Zap, 
-  Activity 
+  Activity,
+  Box
 } from 'lucide-react';
+import { WaterTank3D } from './three/WaterTank3D';
+import { KMapTorus3D } from './three/KMapTorus3D';
+import { LogicGate3D } from './three/LogicGate3D';
 
 export const SimulatorsView: React.FC = () => {
   const { activeSimulatorTab, setActiveSimulatorTab } = useApp();
@@ -21,12 +25,14 @@ export const SimulatorsView: React.FC = () => {
   const [gateA, setGateA] = useState<number>(1);
   const [gateB, setGateB] = useState<number>(0);
   const [gateCin, setGateCin] = useState<number>(0);
+  const [selectedGate3D, setSelectedGate3D] = useState<'AND' | 'OR' | 'NAND' | 'NOR' | 'XOR' | 'NOT'>('AND');
 
   // Tab 2: K-Map Solver State
-  const [kmapVars, setKmapVars] = useState<2 | 3 | 4>(3);
+  const [kmapVars, setKmapVars] = useState<2 | 3 | 4>(4);
+  const [kmapViewMode, setKmapViewMode] = useState<'2d' | '3d'>('2d');
   const [kmapCells, setKmapCells] = useState<Record<number, '0' | '1' | 'X'>>({
-    0: '0', 1: '1', 2: '0', 3: '1', 4: '0', 5: '1', 6: '0', 7: '1',
-    8: '0', 9: '0', 10: '0', 11: '0', 12: '0', 13: '0', 14: '0', 15: '0'
+    0: '1', 1: '0', 2: '1', 3: '0', 4: '0', 5: '0', 6: '0', 7: '0',
+    8: '1', 9: '0', 10: '1', 11: '0', 12: '0', 13: '0', 14: '0', 15: '0'
   });
 
   // Tab 3: Flip-Flop Lab State
@@ -57,6 +63,16 @@ export const SimulatorsView: React.FC = () => {
     }
   };
 
+  const gate3DOutput = (() => {
+    if (selectedGate3D === 'AND') return (gateA && gateB) ? 1 : 0;
+    if (selectedGate3D === 'OR') return (gateA || gateB) ? 1 : 0;
+    if (selectedGate3D === 'NAND') return !(gateA && gateB) ? 1 : 0;
+    if (selectedGate3D === 'NOR') return !(gateA || gateB) ? 1 : 0;
+    if (selectedGate3D === 'XOR') return (gateA !== gateB) ? 1 : 0;
+    if (selectedGate3D === 'NOT') return (gateA === 1 ? 0 : 1);
+    return 0;
+  })();
+
   const nextFsmState = computeNextState(fsmState, sensorA, sensorB);
 
   useEffect(() => {
@@ -85,30 +101,47 @@ export const SimulatorsView: React.FC = () => {
     let nextQ = ffQ;
     let label = '';
 
-    if (ffType === 'D') {
-      nextQ = ffInput1;
-      label = `D=${ffInput1}`;
-    } else if (ffType === 'T') {
-      if (ffInput1 === 1) nextQ = ffQ === 1 ? 0 : 1;
-      label = `T=${ffInput1}`;
-    } else if (ffType === 'JK') {
+    if (ffType === 'JK') {
       const J = ffInput1;
       const K = ffInput2;
-      label = `J=${J}, K=${K}`;
-      if (J === 0 && K === 0) nextQ = ffQ;
-      else if (J === 0 && K === 1) nextQ = 0;
-      else if (J === 1 && K === 0) nextQ = 1;
-      else if (J === 1 && K === 1) nextQ = ffQ === 1 ? 0 : 1;
+      if (J === 0 && K === 0) {
+        nextQ = ffQ;
+        label = 'Hold (0,0)';
+      } else if (J === 0 && K === 1) {
+        nextQ = 0;
+        label = 'Reset (0,1)';
+      } else if (J === 1 && K === 0) {
+        nextQ = 1;
+        label = 'Set (1,0)';
+      } else {
+        nextQ = ffQ === 0 ? 1 : 0;
+        label = 'Toggle (1,1)';
+      }
+    } else if (ffType === 'D') {
+      nextQ = ffInput1;
+      label = `D = ${ffInput1}`;
+    } else if (ffType === 'T') {
+      if (ffInput1 === 1) {
+        nextQ = ffQ === 0 ? 1 : 0;
+        label = 'Toggle (T=1)';
+      } else {
+        nextQ = ffQ;
+        label = 'Hold (T=0)';
+      }
     } else if (ffType === 'SR') {
       const S = ffInput1;
       const R = ffInput2;
-      label = `S=${S}, R=${R}`;
-      if (S === 0 && R === 0) nextQ = ffQ;
-      else if (S === 0 && R === 1) nextQ = 0;
-      else if (S === 1 && R === 0) nextQ = 1;
-      else if (S === 1 && R === 1) {
+      if (S === 0 && R === 0) {
+        nextQ = ffQ;
+        label = 'Hold (0,0)';
+      } else if (S === 0 && R === 1) {
         nextQ = 0;
-        label += ' (FORBIDDEN!)';
+        label = 'Reset (0,1)';
+      } else if (S === 1 && R === 0) {
+        nextQ = 1;
+        label = 'Set (1,0)';
+      } else {
+        label = 'Forbidden (1,1)';
       }
     }
 
@@ -168,27 +201,27 @@ export const SimulatorsView: React.FC = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fadeIn">
       
       {/* Header & Simulator Navigation */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#e6dfd8] dark:border-[#252320] pb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#e2e8f0] dark:border-[#1e293b] pb-6">
         <div>
           <div className="flex items-center space-x-2.5">
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-medium bg-[#efe9de] dark:bg-[#252320] text-[#cc785c] border border-[#e6dfd8] dark:border-[#3d3d3a]">
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-medium bg-[#0066cc]/10 dark:bg-[#0066cc]/20 text-[#0066cc] dark:text-[#38bdf8] border border-[#0066cc]/20">
               Interactive Lab
             </span>
-            <span className="text-xs text-[#6c6a64] dark:text-[#8e8b82]">จำลองการทำงานของฮาร์ดแวร์แบบ Real-time</span>
+            <span className="text-xs text-[#64748b] dark:text-[#94a3b8]">จำลองการทำงานของฮาร์ดแวร์แบบ Real-time</span>
           </div>
-          <h1 className="font-serif text-2xl sm:text-3xl text-[#141413] dark:text-[#faf9f5] mt-1">
+          <h1 className="font-heading font-extrabold text-2xl sm:text-3xl text-[#0f172a] dark:text-[#f8fafc] mt-1 tracking-tight">
             แล็บจำลองวงจรดิจิทัล & FSM
           </h1>
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex items-center bg-[#efe9de] dark:bg-[#1f1e1b] border border-[#e6dfd8] dark:border-[#252320] p-1.5 rounded-xl space-x-1 overflow-x-auto">
+        <div className="flex items-center bg-[#f1f5f9] dark:bg-[#1e293b] border border-[#e2e8f0] dark:border-[#334155] p-1.5 rounded-2xl space-x-1 overflow-x-auto">
           <button
             onClick={() => setActiveSimulatorTab('gates')}
-            className={`px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center space-x-2 transition ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center space-x-2 transition cursor-pointer ${
               activeSimulatorTab === 'gates' 
-                ? 'bg-[#cc785c] text-white shadow-sm' 
-                : 'text-[#6c6a64] dark:text-[#a09d96] hover:text-[#141413]'
+                ? 'bg-[#0066cc] text-white shadow-sm' 
+                : 'text-[#64748b] dark:text-[#94a3b8] hover:text-[#0f172a] dark:hover:text-[#f8fafc]'
             }`}
           >
             <Cpu className="w-3.5 h-3.5" />
@@ -196,10 +229,10 @@ export const SimulatorsView: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveSimulatorTab('kmap')}
-            className={`px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center space-x-2 transition ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center space-x-2 transition cursor-pointer ${
               activeSimulatorTab === 'kmap' 
-                ? 'bg-[#cc785c] text-white shadow-sm' 
-                : 'text-[#6c6a64] dark:text-[#a09d96] hover:text-[#141413]'
+                ? 'bg-[#0066cc] text-white shadow-sm' 
+                : 'text-[#64748b] dark:text-[#94a3b8] hover:text-[#0f172a] dark:hover:text-[#f8fafc]'
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
@@ -207,10 +240,10 @@ export const SimulatorsView: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveSimulatorTab('flipflop')}
-            className={`px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center space-x-2 transition ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center space-x-2 transition cursor-pointer ${
               activeSimulatorTab === 'flipflop' 
-                ? 'bg-[#cc785c] text-white shadow-sm' 
-                : 'text-[#6c6a64] dark:text-[#a09d96] hover:text-[#141413]'
+                ? 'bg-[#0066cc] text-white shadow-sm' 
+                : 'text-[#64748b] dark:text-[#94a3b8] hover:text-[#0f172a] dark:hover:text-[#f8fafc]'
             }`}
           >
             <Activity className="w-3.5 h-3.5" />
@@ -218,10 +251,10 @@ export const SimulatorsView: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveSimulatorTab('fsm')}
-            className={`px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center space-x-2 transition ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center space-x-2 transition cursor-pointer ${
               activeSimulatorTab === 'fsm' 
-                ? 'bg-[#cc785c] text-white shadow-sm' 
-                : 'text-[#6c6a64] dark:text-[#a09d96] hover:text-[#141413]'
+                ? 'bg-[#0066cc] text-white shadow-sm' 
+                : 'text-[#64748b] dark:text-[#94a3b8] hover:text-[#0f172a] dark:hover:text-[#f8fafc]'
             }`}
           >
             <Sparkles className="w-3.5 h-3.5" />
@@ -233,24 +266,24 @@ export const SimulatorsView: React.FC = () => {
       {/* TAB 1: LOGIC GATES & ADDERS */}
       {activeSimulatorTab === 'gates' && (
         <div className="space-y-6">
-          <div className="bg-[#faf9f5] dark:bg-[#1f1e1b] border border-[#e6dfd8] dark:border-[#252320] rounded-2xl p-6 shadow-sm">
-            <h2 className="font-serif text-lg text-[#141413] dark:text-[#faf9f5] mb-4 flex items-center gap-2">
-              <Zap className="w-4 h-4 text-[#cc785c]" />
+          <div className="bg-white dark:bg-[#131b2e] border border-[#e2e8f0] dark:border-[#1e293b] rounded-2xl p-6 shadow-sm">
+            <h2 className="font-heading font-bold text-lg text-[#0f172a] dark:text-[#f8fafc] mb-4 flex items-center gap-2">
+              <Zap className="w-4 h-4 text-[#0066cc] dark:text-[#38bdf8]" />
               กำหนดค่าสัญญาณอินพุต (Input Signals)
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {/* Input A */}
-              <div className="bg-[#f5f0e8] dark:bg-[#181715] p-4 rounded-xl border border-[#e6dfd8] dark:border-[#252320] flex items-center justify-between">
+              <div className="bg-[#f8fafc] dark:bg-[#0b0f19] p-4 rounded-xl border border-[#e2e8f0] dark:border-[#1e293b] flex items-center justify-between">
                 <div>
-                  <div className="text-xs text-[#6c6a64] dark:text-[#8e8b82] font-mono">สัญญาณอินพุต A</div>
-                  <div className="text-xl font-bold font-mono text-[#141413] dark:text-[#faf9f5]">A = {gateA}</div>
+                  <div className="text-xs text-[#64748b] dark:text-[#94a3b8] font-mono">สัญญาณอินพุต A</div>
+                  <div className="text-xl font-bold font-mono text-[#0f172a] dark:text-[#f8fafc]">A = {gateA}</div>
                 </div>
                 <button
                   onClick={() => setGateA(prev => prev === 1 ? 0 : 1)}
-                  className={`px-4 py-2 rounded-lg font-mono font-bold text-xs transition-all ${
+                  className={`px-4 py-2 rounded-lg font-mono font-bold text-xs transition-all cursor-pointer ${
                     gateA === 1 
-                      ? 'bg-[#5db872] text-white shadow-sm' 
-                      : 'bg-[#efe9de] dark:bg-[#252320] text-[#6c6a64] dark:text-[#8e8b82]'
+                      ? 'bg-emerald-600 text-white shadow-sm' 
+                      : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
                   }`}
                 >
                   {gateA === 1 ? 'HIGH (1)' : 'LOW (0)'}
@@ -258,17 +291,17 @@ export const SimulatorsView: React.FC = () => {
               </div>
 
               {/* Input B */}
-              <div className="bg-[#f5f0e8] dark:bg-[#181715] p-4 rounded-xl border border-[#e6dfd8] dark:border-[#252320] flex items-center justify-between">
+              <div className="bg-[#f8fafc] dark:bg-[#0b0f19] p-4 rounded-xl border border-[#e2e8f0] dark:border-[#1e293b] flex items-center justify-between">
                 <div>
-                  <div className="text-xs text-[#6c6a64] dark:text-[#8e8b82] font-mono">สัญญาณอินพุต B</div>
-                  <div className="text-xl font-bold font-mono text-[#141413] dark:text-[#faf9f5]">B = {gateB}</div>
+                  <div className="text-xs text-[#64748b] dark:text-[#94a3b8] font-mono">สัญญาณอินพุต B</div>
+                  <div className="text-xl font-bold font-mono text-[#0f172a] dark:text-[#f8fafc]">B = {gateB}</div>
                 </div>
                 <button
                   onClick={() => setGateB(prev => prev === 1 ? 0 : 1)}
-                  className={`px-4 py-2 rounded-lg font-mono font-bold text-xs transition-all ${
+                  className={`px-4 py-2 rounded-lg font-mono font-bold text-xs transition-all cursor-pointer ${
                     gateB === 1 
-                      ? 'bg-[#5db872] text-white shadow-sm' 
-                      : 'bg-[#efe9de] dark:bg-[#252320] text-[#6c6a64] dark:text-[#8e8b82]'
+                      ? 'bg-emerald-600 text-white shadow-sm' 
+                      : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
                   }`}
                 >
                   {gateB === 1 ? 'HIGH (1)' : 'LOW (0)'}
@@ -276,17 +309,17 @@ export const SimulatorsView: React.FC = () => {
               </div>
 
               {/* Input Cin */}
-              <div className="bg-[#f5f0e8] dark:bg-[#181715] p-4 rounded-xl border border-[#e6dfd8] dark:border-[#252320] flex items-center justify-between">
+              <div className="bg-[#f8fafc] dark:bg-[#0b0f19] p-4 rounded-xl border border-[#e2e8f0] dark:border-[#1e293b] flex items-center justify-between">
                 <div>
-                  <div className="text-xs text-[#6c6a64] dark:text-[#8e8b82] font-mono">ตัวทดเข้า Cin (Full Adder)</div>
-                  <div className="text-xl font-bold font-mono text-[#141413] dark:text-[#faf9f5]">Cin = {gateCin}</div>
+                  <div className="text-xs text-[#64748b] dark:text-[#94a3b8] font-mono">ตัวทดเข้า Cin (Full Adder)</div>
+                  <div className="text-xl font-bold font-mono text-[#0f172a] dark:text-[#f8fafc]">Cin = {gateCin}</div>
                 </div>
                 <button
                   onClick={() => setGateCin(prev => prev === 1 ? 0 : 1)}
-                  className={`px-4 py-2 rounded-lg font-mono font-bold text-xs transition-all ${
+                  className={`px-4 py-2 rounded-lg font-mono font-bold text-xs transition-all cursor-pointer ${
                     gateCin === 1 
-                      ? 'bg-[#e8a55a] text-white shadow-sm' 
-                      : 'bg-[#efe9de] dark:bg-[#252320] text-[#6c6a64] dark:text-[#8e8b82]'
+                      ? 'bg-amber-600 text-white shadow-sm' 
+                      : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
                   }`}
                 >
                   {gateCin === 1 ? 'HIGH (1)' : 'LOW (0)'}
@@ -310,16 +343,16 @@ export const SimulatorsView: React.FC = () => {
                 key={g.name}
                 className={`p-4 rounded-xl border transition-all ${
                   g.val === 1 
-                    ? 'bg-[#efe9de] dark:bg-[#252320] border-[#cc785c]' 
-                    : 'bg-[#faf9f5] dark:bg-[#181715] border-[#e6dfd8] dark:border-[#252320]'
+                    ? 'bg-[#0066cc]/5 dark:bg-[#0066cc]/15 border-[#0066cc]/40' 
+                    : 'bg-white dark:bg-[#0b0f19] border-[#e2e8f0] dark:border-[#1e293b]'
                 }`}
               >
-                <div className="text-xs text-[#6c6a64] dark:text-[#8e8b82] font-mono">{g.name}</div>
-                <div className="text-xs text-[#cc785c] my-0.5">
+                <div className="text-xs text-[#64748b] dark:text-[#94a3b8] font-mono">{g.name}</div>
+                <div className="text-xs text-[#0066cc] dark:text-[#38bdf8] my-0.5 font-mono">
                   <MathView math={g.formula} />
                 </div>
                 <div className={`text-2xl font-bold font-mono mt-1 ${
-                  g.val === 1 ? 'text-[#5db872]' : 'text-[#8e8b82]'
+                  g.val === 1 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'
                 }`}>
                   {g.val}
                 </div>
@@ -331,51 +364,51 @@ export const SimulatorsView: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             
             {/* Half Adder Card */}
-            <div className="bg-[#faf9f5] dark:bg-[#1f1e1b] border border-[#e6dfd8] dark:border-[#252320] rounded-2xl p-6 shadow-sm">
+            <div className="bg-white dark:bg-[#131b2e] border border-[#e2e8f0] dark:border-[#1e293b] rounded-2xl p-6 shadow-sm">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-mono font-bold text-[#cc785c] bg-[#efe9de] dark:bg-[#252320] px-2.5 py-0.5 rounded border border-[#e6dfd8] dark:border-[#3d3d3a]">
+                <span className="text-xs font-mono font-bold text-[#0066cc] dark:text-[#38bdf8] bg-[#0066cc]/10 dark:bg-[#0066cc]/20 px-2.5 py-0.5 rounded border border-[#0066cc]/20">
                   Half Adder (HA)
                 </span>
-                <span className="text-xs text-[#6c6a64] dark:text-[#8e8b82] font-mono">A + B</span>
+                <span className="text-xs text-[#64748b] dark:text-[#94a3b8] font-mono">A + B</span>
               </div>
-              <h3 className="font-serif text-lg text-[#141413] dark:text-[#faf9f5]">วงจรบวกครึ่งตัว</h3>
-              <p className="text-xs text-[#6c6a64] dark:text-[#8e8b82] mt-1 mb-4">
+              <h3 className="font-heading font-bold text-lg text-[#0f172a] dark:text-[#f8fafc]">วงจรบวกครึ่งตัว</h3>
+              <p className="text-xs text-[#64748b] dark:text-[#94a3b8] mt-1 mb-4">
                 บวกอินพุต A ({gateA}) กับ B ({gateB}) ได้ผลลัพธ์เลขฐานสอง 2 บิต:
               </p>
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-[#f5f0e8] dark:bg-[#181715] p-4 rounded-xl border border-[#e6dfd8] dark:border-[#252320]">
-                  <div className="text-xs text-[#6c6a64] dark:text-[#8e8b82]">
+                <div className="bg-[#f8fafc] dark:bg-[#0b0f19] p-4 rounded-xl border border-[#e2e8f0] dark:border-[#1e293b]">
+                  <div className="text-xs text-[#64748b] dark:text-[#94a3b8]">
                     Sum (<MathView math="S = A \oplus B" />)
                   </div>
-                  <div className="text-3xl font-bold font-mono text-[#cc785c] mt-1">
+                  <div className="text-3xl font-bold font-mono text-[#0066cc] dark:text-[#38bdf8] mt-1">
                     {gateA ^ gateB}
                   </div>
                 </div>
-                <div className="bg-[#f5f0e8] dark:bg-[#181715] p-4 rounded-xl border border-[#e6dfd8] dark:border-[#252320]">
-                  <div className="text-xs text-[#6c6a64] dark:text-[#8e8b82]">
+                <div className="bg-[#f8fafc] dark:bg-[#0b0f19] p-4 rounded-xl border border-[#e2e8f0] dark:border-[#1e293b]">
+                  <div className="text-xs text-[#64748b] dark:text-[#94a3b8]">
                     Carry (<MathView math="C = A \cdot B" />)
                   </div>
-                  <div className="text-3xl font-bold font-mono text-[#5db872] mt-1">
+                  <div className="text-3xl font-bold font-mono text-emerald-600 dark:text-emerald-400 mt-1">
                     {gateA & gateB}
                   </div>
                 </div>
               </div>
-              <div className="mt-4 text-xs font-mono text-[#6c6a64] dark:text-[#8e8b82] bg-[#f5f0e8] dark:bg-[#181715] p-2.5 rounded-lg border border-[#e6dfd8] dark:border-[#252320]">
+              <div className="mt-4 text-xs font-mono text-[#64748b] dark:text-[#94a3b8] bg-[#f8fafc] dark:bg-[#0b0f19] p-2.5 rounded-lg border border-[#e2e8f0] dark:border-[#1e293b]">
                 ผลลัพธ์ในฐานสิบ: {gateA} + {gateB} = {(gateA & gateB) * 2 + (gateA ^ gateB)} (ไบนารี: {gateA & gateB}{gateA ^ gateB}₂)
               </div>
             </div>
 
             {/* Full Adder Card */}
-            <div className="bg-[#faf9f5] dark:bg-[#1f1e1b] border border-[#e6dfd8] dark:border-[#252320] rounded-2xl p-6 shadow-sm">
+            <div className="bg-white dark:bg-[#131b2e] border border-[#e2e8f0] dark:border-[#1e293b] rounded-2xl p-6 shadow-sm">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-mono font-bold text-[#5db8a6] bg-[#efe9de] dark:bg-[#252320] px-2.5 py-0.5 rounded border border-[#e6dfd8] dark:border-[#3d3d3a]">
+                <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 dark:bg-emerald-500/20 px-2.5 py-0.5 rounded border border-emerald-500/20">
                   Full Adder (FA)
                 </span>
-                <span className="text-xs text-[#6c6a64] dark:text-[#8e8b82] font-mono">A + B + Cin</span>
+                <span className="text-xs text-[#64748b] dark:text-[#94a3b8] font-mono">A + B + Cin</span>
               </div>
-              <h3 className="font-serif text-lg text-[#141413] dark:text-[#faf9f5]">วงจรบวกเต็มตัว</h3>
-              <p className="text-xs text-[#6c6a64] dark:text-[#8e8b82] mt-1 mb-4">
+              <h3 className="font-heading font-bold text-lg text-[#0f172a] dark:text-[#f8fafc]">วงจรบวกเต็มตัว</h3>
+              <p className="text-xs text-[#64748b] dark:text-[#94a3b8] mt-1 mb-4">
                 บวก A ({gateA}) + B ({gateB}) + Cin ({gateCin}) รับตัวทดจากหลักก่อนหน้าได้:
               </p>
 
@@ -385,24 +418,24 @@ export const SimulatorsView: React.FC = () => {
                 return (
                   <div>
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-[#f5f0e8] dark:bg-[#181715] p-4 rounded-xl border border-[#e6dfd8] dark:border-[#252320]">
-                        <div className="text-xs text-[#6c6a64] dark:text-[#8e8b82]">
+                      <div className="bg-[#f8fafc] dark:bg-[#0b0f19] p-4 rounded-xl border border-[#e2e8f0] dark:border-[#1e293b]">
+                        <div className="text-xs text-[#64748b] dark:text-[#94a3b8]">
                           Sum (<MathView math="S = A \oplus B \oplus C_{in}" />)
                         </div>
-                        <div className="text-3xl font-bold font-mono text-[#5db8a6] mt-1">
+                        <div className="text-3xl font-bold font-mono text-[#0066cc] dark:text-[#38bdf8] mt-1">
                           {faSum}
                         </div>
                       </div>
-                      <div className="bg-[#f5f0e8] dark:bg-[#181715] p-4 rounded-xl border border-[#e6dfd8] dark:border-[#252320]">
-                        <div className="text-xs text-[#6c6a64] dark:text-[#8e8b82]">
+                      <div className="bg-[#f8fafc] dark:bg-[#0b0f19] p-4 rounded-xl border border-[#e2e8f0] dark:border-[#1e293b]">
+                        <div className="text-xs text-[#64748b] dark:text-[#94a3b8]">
                           Carry Out (<MathView math="C_{out}" />)
                         </div>
-                        <div className="text-3xl font-bold font-mono text-[#5db872] mt-1">
+                        <div className="text-3xl font-bold font-mono text-emerald-600 dark:text-emerald-400 mt-1">
                           {faCout}
                         </div>
                       </div>
                     </div>
-                    <div className="mt-4 text-xs font-mono text-[#6c6a64] dark:text-[#8e8b82] bg-[#f5f0e8] dark:bg-[#181715] p-2.5 rounded-lg border border-[#e6dfd8] dark:border-[#252320]">
+                    <div className="mt-4 text-xs font-mono text-[#64748b] dark:text-[#94a3b8] bg-[#f8fafc] dark:bg-[#0b0f19] p-2.5 rounded-lg border border-[#e2e8f0] dark:border-[#1e293b]">
                       ผลลัพธ์ในฐานสิบ: {gateA} + {gateB} + {gateCin} = {faCout * 2 + faSum} (ไบนารี: {faCout}{faSum}₂)
                     </div>
                   </div>
@@ -411,32 +444,73 @@ export const SimulatorsView: React.FC = () => {
             </div>
 
           </div>
+
+          {/* 3D DIP-14 IC Chip & Breadboard Simulation Card */}
+          <div className="bg-white dark:bg-[#131b2e] border border-[#e2e8f0] dark:border-[#1e293b] rounded-2xl p-6 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="font-heading font-bold text-lg text-[#0f172a] dark:text-[#f8fafc] flex items-center gap-2">
+                  <Box className="w-5 h-5 text-[#0066cc] dark:text-[#38bdf8]" />
+                  จำลองชิปไอซีจริง DIP-14 บนเบรดบอร์ด 3D (Three.js WebGL)
+                </h3>
+                <p className="text-xs text-[#64748b] dark:text-[#94a3b8]">
+                  หมุนดูชิปจริงตระกูล 74HC ต่อสายไฟอินพุต A (ขา 1), B (ขา 2) และดูหลอด LED เปล่งแสงที่เอาต์พุต (ขา 3)
+                </p>
+              </div>
+
+              {/* Gate Selector Pills */}
+              <div className="flex flex-wrap items-center gap-1.5 bg-[#f1f5f9] dark:bg-[#0b0f19] p-1.5 rounded-xl border border-[#e2e8f0] dark:border-[#1e293b]">
+                {(['AND', 'OR', 'NAND', 'NOR', 'XOR', 'NOT'] as const).map(g => (
+                  <button
+                    key={g}
+                    onClick={() => setSelectedGate3D(g)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition cursor-pointer ${
+                      selectedGate3D === g
+                        ? 'bg-[#0066cc] text-white shadow-sm'
+                        : 'text-[#64748b] dark:text-[#94a3b8] hover:text-[#0f172a] dark:hover:text-[#f8fafc]'
+                    }`}
+                  >
+                    {g}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <LogicGate3D
+              gateType={selectedGate3D}
+              inputA={gateA}
+              inputB={gateB}
+              output={gate3DOutput}
+              setInputA={setGateA}
+              setInputB={setGateB}
+            />
+          </div>
         </div>
       )}
 
       {/* TAB 2: K-MAP SOLVER */}
       {activeSimulatorTab === 'kmap' && (
         <div className="space-y-6">
-          <div className="bg-[#faf9f5] dark:bg-[#1f1e1b] border border-[#e6dfd8] dark:border-[#252320] rounded-2xl p-6 shadow-sm">
+          <div className="bg-white dark:bg-[#131b2e] border border-[#e2e8f0] dark:border-[#1e293b] rounded-2xl p-6 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
               <div>
-                <h2 className="font-serif text-xl text-[#141413] dark:text-[#faf9f5] flex items-center gap-2">
-                  <Layers className="w-5 h-5 text-[#cc785c]" />
+                <h2 className="font-heading font-bold text-xl text-[#0f172a] dark:text-[#f8fafc] flex items-center gap-2">
+                  <Layers className="w-5 h-5 text-[#0066cc] dark:text-[#38bdf8]" />
                   K-Map Grid & Live Solver
                 </h2>
-                <p className="text-xs text-[#6c6a64] dark:text-[#8e8b82]">คลิกที่แต่ละช่องเพื่อเปลี่ยนค่า (0 → 1 → X) และดูผลการลดรูป</p>
+                <p className="text-xs text-[#64748b] dark:text-[#94a3b8]">คลิกที่แต่ละช่องเพื่อเปลี่ยนค่า (0 → 1 → X) และดูผลการลดรูป</p>
               </div>
 
               <div className="flex items-center space-x-2">
-                <span className="text-xs text-[#6c6a64] dark:text-[#8e8b82]">จำนวนตัวแปร:</span>
+                <span className="text-xs text-[#64748b] dark:text-[#94a3b8]">จำนวนตัวแปร:</span>
                 {[2, 3, 4].map(v => (
                   <button
                     key={v}
                     onClick={() => setKmapVars(v as 2 | 3 | 4)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition cursor-pointer ${
                       kmapVars === v 
-                        ? 'bg-[#cc785c] text-white' 
-                        : 'bg-[#efe9de] dark:bg-[#252320] text-[#6c6a64] dark:text-[#8e8b82] hover:text-[#141413]'
+                        ? 'bg-[#0066cc] text-white shadow-sm' 
+                        : 'bg-[#f1f5f9] dark:bg-[#1e293b] text-[#64748b] dark:text-[#94a3b8] hover:text-[#0f172a] dark:hover:text-[#f8fafc]'
                     }`}
                   >
                     {v} ตัวแปร
@@ -448,56 +522,56 @@ export const SimulatorsView: React.FC = () => {
             {/* 3-Variable K-Map Display */}
             {kmapVars === 3 && (
               <div className="overflow-x-auto pb-4">
-                <div className="min-w-[420px] max-w-lg mx-auto bg-[#f5f0e8] dark:bg-[#181715] p-6 rounded-2xl border border-[#e6dfd8] dark:border-[#252320]">
-                  <div className="text-center font-mono text-xs text-[#6c6a64] dark:text-[#8e8b82] mb-3">
+                <div className="min-w-[420px] max-w-lg mx-auto bg-[#f8fafc] dark:bg-[#0b0f19] p-6 rounded-2xl border border-[#e2e8f0] dark:border-[#1e293b]">
+                  <div className="text-center font-mono text-xs text-[#64748b] dark:text-[#94a3b8] mb-3">
                     แกนตั้ง: A (0, 1) | แกนนอน: BC (00, 01, 11, 10 Gray Code)
                   </div>
 
                   <table className="w-full text-center border-collapse">
                     <thead>
                       <tr>
-                        <th className="p-2 border border-[#e6dfd8] dark:border-[#252320] text-xs font-mono text-[#8e8b82] bg-[#efe9de] dark:bg-[#252320]">A \ BC</th>
-                        <th className="p-2 border border-[#e6dfd8] dark:border-[#252320] text-xs font-mono text-[#cc785c] bg-[#efe9de] dark:bg-[#252320]">00</th>
-                        <th className="p-2 border border-[#e6dfd8] dark:border-[#252320] text-xs font-mono text-[#cc785c] bg-[#efe9de] dark:bg-[#252320]">01</th>
-                        <th className="p-2 border border-[#e6dfd8] dark:border-[#252320] text-xs font-mono text-[#cc785c] bg-[#efe9de] dark:bg-[#252320]">11</th>
-                        <th className="p-2 border border-[#e6dfd8] dark:border-[#252320] text-xs font-mono text-[#cc785c] bg-[#efe9de] dark:bg-[#252320]">10</th>
+                        <th className="p-2 border border-[#e2e8f0] dark:border-[#1e293b] text-xs font-mono text-[#64748b] dark:text-[#94a3b8] bg-[#f1f5f9] dark:bg-[#1e293b]">A \ BC</th>
+                        <th className="p-2 border border-[#e2e8f0] dark:border-[#1e293b] text-xs font-mono text-[#0066cc] dark:text-[#38bdf8] bg-[#f1f5f9] dark:bg-[#1e293b]">00</th>
+                        <th className="p-2 border border-[#e2e8f0] dark:border-[#1e293b] text-xs font-mono text-[#0066cc] dark:text-[#38bdf8] bg-[#f1f5f9] dark:bg-[#1e293b]">01</th>
+                        <th className="p-2 border border-[#e2e8f0] dark:border-[#1e293b] text-xs font-mono text-[#0066cc] dark:text-[#38bdf8] bg-[#f1f5f9] dark:bg-[#1e293b]">11</th>
+                        <th className="p-2 border border-[#e2e8f0] dark:border-[#1e293b] text-xs font-mono text-[#0066cc] dark:text-[#38bdf8] bg-[#f1f5f9] dark:bg-[#1e293b]">10</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr>
-                        <td className="p-3 border border-[#e6dfd8] dark:border-[#252320] text-xs font-mono text-[#cc785c] bg-[#efe9de] dark:bg-[#252320] font-bold">0</td>
+                        <td className="p-3 border border-[#e2e8f0] dark:border-[#1e293b] text-xs font-mono text-[#0066cc] dark:text-[#38bdf8] bg-[#f1f5f9] dark:bg-[#1e293b] font-bold">0</td>
                         {[0, 1, 3, 2].map(cellIdx => (
                           <td 
                             key={cellIdx}
                             onClick={() => toggleKmapCell(cellIdx)}
-                            className={`p-4 border border-[#e6dfd8] dark:border-[#252320] cursor-pointer transition select-none ${
+                            className={`p-4 border border-[#e2e8f0] dark:border-[#1e293b] cursor-pointer transition select-none ${
                               kmapCells[cellIdx] === '1' 
-                                ? 'bg-[#efe9de] dark:bg-[#252320] text-[#cc785c] font-bold text-xl' 
+                                ? 'bg-[#0066cc]/15 text-[#0066cc] dark:text-[#38bdf8] font-bold text-xl' 
                                 : kmapCells[cellIdx] === 'X'
-                                ? 'bg-[#e8a55a]/20 text-[#e8a55a] font-bold text-xl'
-                                : 'bg-transparent text-[#8e8b82] hover:bg-[#efe9de]/50'
+                                ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold text-xl'
+                                : 'bg-transparent text-[#94a3b8] hover:bg-[#f1f5f9] dark:hover:bg-[#1e293b]/50'
                             }`}
                           >
-                            <div className="text-xs text-[#8e8b82] font-mono mb-0.5">m{cellIdx}</div>
+                            <div className="text-xs text-[#94a3b8] font-mono mb-0.5">m{cellIdx}</div>
                             {kmapCells[cellIdx] || '0'}
                           </td>
                         ))}
                       </tr>
                       <tr>
-                        <td className="p-3 border border-[#e6dfd8] dark:border-[#252320] text-xs font-mono text-[#cc785c] bg-[#efe9de] dark:bg-[#252320] font-bold">1</td>
+                        <td className="p-3 border border-[#e2e8f0] dark:border-[#1e293b] text-xs font-mono text-[#0066cc] dark:text-[#38bdf8] bg-[#f1f5f9] dark:bg-[#1e293b] font-bold">1</td>
                         {[4, 5, 7, 6].map(cellIdx => (
                           <td 
                             key={cellIdx}
                             onClick={() => toggleKmapCell(cellIdx)}
-                            className={`p-4 border border-[#e6dfd8] dark:border-[#252320] cursor-pointer transition select-none ${
+                            className={`p-4 border border-[#e2e8f0] dark:border-[#1e293b] cursor-pointer transition select-none ${
                               kmapCells[cellIdx] === '1' 
-                                ? 'bg-[#efe9de] dark:bg-[#252320] text-[#cc785c] font-bold text-xl' 
+                                ? 'bg-[#0066cc]/15 text-[#0066cc] dark:text-[#38bdf8] font-bold text-xl' 
                                 : kmapCells[cellIdx] === 'X'
-                                ? 'bg-[#e8a55a]/20 text-[#e8a55a] font-bold text-xl'
-                                : 'bg-transparent text-[#8e8b82] hover:bg-[#efe9de]/50'
+                                ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold text-xl'
+                                : 'bg-transparent text-[#94a3b8] hover:bg-[#f1f5f9] dark:hover:bg-[#1e293b]/50'
                             }`}
                           >
-                            <div className="text-xs text-[#8e8b82] font-mono mb-0.5">m{cellIdx}</div>
+                            <div className="text-xs text-[#94a3b8] font-mono mb-0.5">m{cellIdx}</div>
                             {kmapCells[cellIdx] || '0'}
                           </td>
                         ))}
@@ -510,92 +584,136 @@ export const SimulatorsView: React.FC = () => {
 
             {/* 4-Variable K-Map Display */}
             {kmapVars === 4 && (
-              <div className="overflow-x-auto pb-4">
-                <div className="min-w-[480px] max-w-xl mx-auto bg-[#f5f0e8] dark:bg-[#181715] p-6 rounded-2xl border border-[#e6dfd8] dark:border-[#252320]">
-                  <div className="text-center font-mono text-xs text-[#6c6a64] dark:text-[#8e8b82] mb-3">
-                    แกนตั้ง: AB (00, 01, 11, 10) | แกนนอน: CD (00, 01, 11, 10)
+              <div className="space-y-4">
+                <div className="flex items-center justify-center">
+                  <div className="flex items-center bg-[#f1f5f9] dark:bg-[#0b0f19] p-1 rounded-xl border border-[#e2e8f0] dark:border-[#1e293b]">
+                    <button
+                      onClick={() => setKmapViewMode('2d')}
+                      className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition cursor-pointer ${
+                        kmapViewMode === '2d'
+                          ? 'bg-[#0066cc] text-white shadow-sm'
+                          : 'text-[#64748b] dark:text-[#94a3b8] hover:text-[#0f172a] dark:hover:text-[#f8fafc]'
+                      }`}
+                    >
+                      <Layers className="w-3.5 h-3.5" />
+                      <span>ตาราง 2D (Grid Matrix)</span>
+                    </button>
+                    <button
+                      onClick={() => setKmapViewMode('3d')}
+                      className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition cursor-pointer ${
+                        kmapViewMode === '3d'
+                          ? 'bg-[#0066cc] text-white shadow-sm'
+                          : 'text-[#64748b] dark:text-[#94a3b8] hover:text-[#0f172a] dark:hover:text-[#f8fafc]'
+                      }`}
+                    >
+                      <Box className="w-3.5 h-3.5" />
+                      <span>มุมมอง 3D Torus (Donut Topology)</span>
+                    </button>
                   </div>
-
-                  <table className="w-full text-center border-collapse">
-                    <thead>
-                      <tr>
-                        <th className="p-2 border border-[#e6dfd8] dark:border-[#252320] text-xs font-mono text-[#8e8b82] bg-[#efe9de] dark:bg-[#252320]">AB \ CD</th>
-                        {['00', '01', '11', '10'].map(cd => (
-                          <th key={cd} className="p-2 border border-[#e6dfd8] dark:border-[#252320] text-xs font-mono text-[#cc785c] bg-[#efe9de] dark:bg-[#252320]">{cd}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {[
-                        { ab: '00', cells: [0, 1, 3, 2] },
-                        { ab: '01', cells: [4, 5, 7, 6] },
-                        { ab: '11', cells: [12, 13, 15, 14] },
-                        { ab: '10', cells: [8, 9, 11, 10] },
-                      ].map(row => (
-                        <tr key={row.ab}>
-                          <td className="p-2.5 border border-[#e6dfd8] dark:border-[#252320] text-xs font-mono text-[#cc785c] bg-[#efe9de] dark:bg-[#252320] font-bold">{row.ab}</td>
-                          {row.cells.map(cellIdx => (
-                            <td 
-                              key={cellIdx}
-                              onClick={() => toggleKmapCell(cellIdx)}
-                              className={`p-3 border border-[#e6dfd8] dark:border-[#252320] cursor-pointer transition select-none ${
-                                kmapCells[cellIdx] === '1' 
-                                  ? 'bg-[#efe9de] dark:bg-[#252320] text-[#cc785c] font-bold text-lg' 
-                                  : kmapCells[cellIdx] === 'X'
-                                  ? 'bg-[#e8a55a]/20 text-[#e8a55a] font-bold text-lg'
-                                  : 'bg-transparent text-[#8e8b82] hover:bg-[#efe9de]/50'
-                              }`}
-                            >
-                              <div className="text-xs text-[#8e8b82] font-mono">{cellIdx}</div>
-                              {kmapCells[cellIdx] || '0'}
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
                 </div>
+
+                {kmapViewMode === '2d' ? (
+                  <div className="overflow-x-auto pb-4">
+                    <div className="min-w-[480px] max-w-xl mx-auto bg-[#f8fafc] dark:bg-[#0b0f19] p-6 rounded-2xl border border-[#e2e8f0] dark:border-[#1e293b]">
+                      <div className="text-center font-mono text-xs text-[#64748b] dark:text-[#94a3b8] mb-3">
+                        แกนตั้ง: AB (00, 01, 11, 10) | แกนนอน: CD (00, 01, 11, 10)
+                      </div>
+
+                      <table className="w-full text-center border-collapse">
+                        <thead>
+                          <tr>
+                            <th className="p-2 border border-[#e2e8f0] dark:border-[#1e293b] text-xs font-mono text-[#64748b] dark:text-[#94a3b8] bg-[#f1f5f9] dark:bg-[#1e293b]">AB \ CD</th>
+                            {['00', '01', '11', '10'].map(cd => (
+                              <th key={cd} className="p-2 border border-[#e2e8f0] dark:border-[#1e293b] text-xs font-mono text-[#0066cc] dark:text-[#38bdf8] bg-[#f1f5f9] dark:bg-[#1e293b]">{cd}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {[
+                            { ab: '00', cells: [0, 1, 3, 2] },
+                            { ab: '01', cells: [4, 5, 7, 6] },
+                            { ab: '11', cells: [12, 13, 15, 14] },
+                            { ab: '10', cells: [8, 9, 11, 10] },
+                          ].map(row => (
+                            <tr key={row.ab}>
+                              <td className="p-2.5 border border-[#e2e8f0] dark:border-[#1e293b] text-xs font-mono text-[#0066cc] dark:text-[#38bdf8] bg-[#f1f5f9] dark:bg-[#1e293b] font-bold">{row.ab}</td>
+                              {row.cells.map(cellIdx => (
+                                <td 
+                                  key={cellIdx}
+                                  onClick={() => toggleKmapCell(cellIdx)}
+                                  className={`p-3 border border-[#e2e8f0] dark:border-[#1e293b] cursor-pointer transition select-none ${
+                                    kmapCells[cellIdx] === '1' 
+                                      ? 'bg-[#0066cc]/15 text-[#0066cc] dark:text-[#38bdf8] font-bold text-lg' 
+                                      : kmapCells[cellIdx] === 'X'
+                                      ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold text-lg'
+                                      : 'bg-transparent text-[#94a3b8] hover:bg-[#f1f5f9] dark:hover:bg-[#1e293b]/50'
+                                  }`}
+                                >
+                                  <div className="text-xs text-[#94a3b8] font-mono">{cellIdx}</div>
+                                  {kmapCells[cellIdx] || '0'}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="p-4 bg-[#0066cc]/5 dark:bg-[#0066cc]/15 rounded-xl border border-[#0066cc]/25 text-xs text-[#334155] dark:text-[#cbd5e1]">
+                      <div className="font-bold text-[#0066cc] dark:text-[#38bdf8] mb-1 flex items-center gap-1.5">
+                        <Sparkles className="w-4 h-4" />
+                        <span>หลักการพื้นผิวโดนัท (Torus Adjacency):</span>
+                      </div>
+                      <p>
+                        ในมิติ 3D ตาราง K-Map 4 ตัวแปรจะม้วนขอบซ้ายชนขอบขวาเป็นทรงกระบอก และม้วนขอบบนชนขอบล่างเป็นวงแหวนโดนัท ทำให้ <strong>4 มุมสุดขอบ (<MathView math="m_0, m_2, m_8, m_{10}" />)</strong> มาสัมผัสชิดกันที่จุดยอดเดียว เกิดเป็นกลุ่ม 4 ช่องลดรูปเหลือ <MathView math="B'D'" />
+                      </p>
+                    </div>
+                    <KMapTorus3D kmapCells={kmapCells} onCellToggle={toggleKmapCell} />
+                  </div>
+                )}
               </div>
             )}
 
             {/* 2-Variable K-Map Display */}
             {kmapVars === 2 && (
-              <div className="max-w-xs mx-auto bg-[#f5f0e8] dark:bg-[#181715] p-6 rounded-2xl border border-[#e6dfd8] dark:border-[#252320]">
+              <div className="max-w-xs mx-auto bg-[#f8fafc] dark:bg-[#0b0f19] p-6 rounded-2xl border border-[#e2e8f0] dark:border-[#1e293b]">
                 <table className="w-full text-center border-collapse">
                   <thead>
                     <tr>
-                      <th className="p-2 border border-[#e6dfd8] dark:border-[#252320] text-xs font-mono text-[#8e8b82]">A \ B</th>
-                      <th className="p-2 border border-[#e6dfd8] dark:border-[#252320] text-xs font-mono text-[#cc785c]">0</th>
-                      <th className="p-2 border border-[#e6dfd8] dark:border-[#252320] text-xs font-mono text-[#cc785c]">1</th>
+                      <th className="p-2 border border-[#e2e8f0] dark:border-[#1e293b] text-xs font-mono text-[#64748b] dark:text-[#94a3b8]">A \ B</th>
+                      <th className="p-2 border border-[#e2e8f0] dark:border-[#1e293b] text-xs font-mono text-[#0066cc] dark:text-[#38bdf8]">0</th>
+                      <th className="p-2 border border-[#e2e8f0] dark:border-[#1e293b] text-xs font-mono text-[#0066cc] dark:text-[#38bdf8]">1</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
-                      <td className="p-3 border border-[#e6dfd8] dark:border-[#252320] text-xs font-mono text-[#cc785c] font-bold">0</td>
+                      <td className="p-3 border border-[#e2e8f0] dark:border-[#1e293b] text-xs font-mono text-[#0066cc] dark:text-[#38bdf8] font-bold">0</td>
                       {[0, 1].map(i => (
                         <td 
                           key={i}
                           onClick={() => toggleKmapCell(i)}
-                          className={`p-4 border border-[#e6dfd8] dark:border-[#252320] cursor-pointer font-bold text-xl select-none ${
-                            kmapCells[i] === '1' ? 'bg-[#efe9de] dark:bg-[#252320] text-[#cc785c]' : 'text-[#8e8b82]'
+                          className={`p-4 border border-[#e2e8f0] dark:border-[#1e293b] cursor-pointer font-bold text-xl select-none ${
+                            kmapCells[i] === '1' ? 'bg-[#0066cc]/15 text-[#0066cc] dark:text-[#38bdf8]' : 'text-[#94a3b8]'
                           }`}
                         >
-                          <div className="text-xs text-[#8e8b82] font-mono">m{i}</div>
+                          <div className="text-xs text-[#94a3b8] font-mono">m{i}</div>
                           {kmapCells[i] || '0'}
                         </td>
                       ))}
                     </tr>
                     <tr>
-                      <td className="p-3 border border-[#e6dfd8] dark:border-[#252320] text-xs font-mono text-[#cc785c] font-bold">1</td>
+                      <td className="p-3 border border-[#e2e8f0] dark:border-[#1e293b] text-xs font-mono text-[#0066cc] dark:text-[#38bdf8] font-bold">1</td>
                       {[2, 3].map(i => (
                         <td 
                           key={i}
                           onClick={() => toggleKmapCell(i)}
-                          className={`p-4 border border-[#e6dfd8] dark:border-[#252320] cursor-pointer font-bold text-xl select-none ${
-                            kmapCells[i] === '1' ? 'bg-[#efe9de] dark:bg-[#252320] text-[#cc785c]' : 'text-[#8e8b82]'
+                          className={`p-4 border border-[#e2e8f0] dark:border-[#1e293b] cursor-pointer font-bold text-xl select-none ${
+                            kmapCells[i] === '1' ? 'bg-[#0066cc]/15 text-[#0066cc] dark:text-[#38bdf8]' : 'text-[#94a3b8]'
                           }`}
                         >
-                          <div className="text-xs text-[#8e8b82] font-mono">m{i}</div>
+                          <div className="text-xs text-[#94a3b8] font-mono">m{i}</div>
                           {kmapCells[i] || '0'}
                         </td>
                       ))}
@@ -606,16 +724,16 @@ export const SimulatorsView: React.FC = () => {
             )}
 
             {/* Minimized Expression with MathView */}
-            <div className="mt-6 bg-[#f5f0e8] dark:bg-[#181715] p-4 rounded-xl border border-[#e6dfd8] dark:border-[#252320] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="mt-6 bg-[#f8fafc] dark:bg-[#0b0f19] p-4 rounded-xl border border-[#e2e8f0] dark:border-[#1e293b] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <div className="text-xs text-[#6c6a64] dark:text-[#8e8b82] font-mono">สมการลดรูปขั้นต่ำ (Minimized Expression):</div>
-                <div className="text-lg font-bold text-[#cc785c] mt-0.5">
+                <div className="text-xs text-[#64748b] dark:text-[#94a3b8] font-mono">สมการลดรูปขั้นต่ำ (Minimized Expression):</div>
+                <div className="text-lg font-bold text-[#0066cc] dark:text-[#38bdf8] mt-0.5 font-mono">
                   <MathView math={`F = ${getKmapFormula()}`} />
                 </div>
               </div>
               <button
                 onClick={() => setKmapCells({})}
-                className="self-start sm:self-auto px-3 py-1.5 rounded-lg text-xs font-semibold text-[#6c6a64] dark:text-[#a09d96] bg-[#efe9de] dark:bg-[#252320] border border-[#e6dfd8] dark:border-[#3d3d3a] flex items-center gap-1.5"
+                className="self-start sm:self-auto px-3 py-1.5 rounded-lg text-xs font-semibold text-[#64748b] dark:text-[#94a3b8] bg-[#f1f5f9] dark:bg-[#1e293b] border border-[#e2e8f0] dark:border-[#334155] flex items-center gap-1.5 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 <span>รีเซ็ตตารางเป็น 0 ทั้งหมด</span>
@@ -628,17 +746,17 @@ export const SimulatorsView: React.FC = () => {
       {/* TAB 3: FLIP-FLOP & CLOCK LAB */}
       {activeSimulatorTab === 'flipflop' && (
         <div className="space-y-6">
-          <div className="bg-[#faf9f5] dark:bg-[#1f1e1b] border border-[#e6dfd8] dark:border-[#252320] rounded-2xl p-6 shadow-sm">
+          <div className="bg-white dark:bg-[#131b2e] border border-[#e2e8f0] dark:border-[#1e293b] rounded-2xl p-6 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
               <div>
-                <h2 className="font-serif text-xl text-[#141413] dark:text-[#faf9f5] flex items-center gap-2">
-                  <Activity className="w-5 h-5 text-[#cc785c]" />
+                <h2 className="font-heading font-bold text-xl text-[#0f172a] dark:text-[#f8fafc] flex items-center gap-2">
+                  <Activity className="w-5 h-5 text-[#0066cc] dark:text-[#38bdf8]" />
                   Flip-Flop State Transition & Excitation Lab
                 </h2>
-                <p className="text-xs text-[#6c6a64] dark:text-[#8e8b82]">เลือกชนิดฟลิปฟลอป กำหนดอินพุต แล้วกดปุ่มส่งสัญญาณ Clock Edge</p>
+                <p className="text-xs text-[#64748b] dark:text-[#94a3b8]">เลือกชนิดฟลิปฟลอป กำหนดอินพุต แล้วกดปุ่มส่งสัญญาณ Clock Edge</p>
               </div>
 
-              <div className="flex items-center space-x-1.5 bg-[#f5f0e8] dark:bg-[#181715] p-1 rounded-xl border border-[#e6dfd8] dark:border-[#252320]">
+              <div className="flex items-center space-x-1.5 bg-[#f1f5f9] dark:bg-[#0b0f19] p-1 rounded-xl border border-[#e2e8f0] dark:border-[#1e293b]">
                 {(['JK', 'D', 'T', 'SR'] as const).map(t => (
                   <button
                     key={t}
@@ -646,8 +764,10 @@ export const SimulatorsView: React.FC = () => {
                       setFfType(t);
                       if (t === 'D' || t === 'T') setFfInput2(0);
                     }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold font-mono transition ${
-                      ffType === t ? 'bg-[#cc785c] text-white' : 'text-[#6c6a64] dark:text-[#8e8b82]'
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold font-mono transition cursor-pointer ${
+                      ffType === t 
+                        ? 'bg-[#0066cc] text-white shadow-sm' 
+                        : 'text-[#64748b] dark:text-[#94a3b8] hover:text-[#0f172a] dark:hover:text-[#f8fafc]'
                     }`}
                   >
                     {t} FF
@@ -658,19 +778,21 @@ export const SimulatorsView: React.FC = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Inputs & Clock Trigger */}
-              <div className="bg-[#f5f0e8] dark:bg-[#181715] p-5 rounded-xl border border-[#e6dfd8] dark:border-[#252320] space-y-4">
-                <h3 className="text-xs font-mono font-semibold uppercase tracking-wider text-[#6c6a64] dark:text-[#8e8b82]">
+              <div className="bg-[#f8fafc] dark:bg-[#0b0f19] p-5 rounded-xl border border-[#e2e8f0] dark:border-[#1e293b] space-y-4">
+                <h3 className="text-xs font-mono font-semibold uppercase tracking-wider text-[#64748b] dark:text-[#94a3b8]">
                   ควบคุมอินพุต (Inputs)
                 </h3>
 
-                <div className="flex items-center justify-between bg-[#faf9f5] dark:bg-[#1f1e1b] p-3 rounded-lg border border-[#e6dfd8] dark:border-[#252320]">
-                  <span className="font-mono text-sm font-bold text-[#141413] dark:text-[#faf9f5]">
+                <div className="flex items-center justify-between bg-white dark:bg-[#131b2e] p-3 rounded-lg border border-[#e2e8f0] dark:border-[#1e293b]">
+                  <span className="font-mono text-sm font-bold text-[#0f172a] dark:text-[#f8fafc]">
                     {ffType === 'JK' ? 'Input J' : ffType === 'SR' ? 'Input S' : ffType === 'D' ? 'Input D' : 'Input T'}
                   </span>
                   <button
                     onClick={() => setFfInput1(prev => prev === 1 ? 0 : 1)}
-                    className={`px-3.5 py-1.5 rounded-lg font-mono font-bold text-xs ${
-                      ffInput1 === 1 ? 'bg-[#cc785c] text-white' : 'bg-[#efe9de] dark:bg-[#252320] text-[#6c6a64]'
+                    className={`px-3.5 py-1.5 rounded-lg font-mono font-bold text-xs cursor-pointer transition ${
+                      ffInput1 === 1 
+                        ? 'bg-[#0066cc] text-white shadow-sm' 
+                        : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
                     }`}
                   >
                     {ffInput1}
@@ -678,14 +800,16 @@ export const SimulatorsView: React.FC = () => {
                 </div>
 
                 {(ffType === 'JK' || ffType === 'SR') && (
-                  <div className="flex items-center justify-between bg-[#faf9f5] dark:bg-[#1f1e1b] p-3 rounded-lg border border-[#e6dfd8] dark:border-[#252320]">
-                    <span className="font-mono text-sm font-bold text-[#141413] dark:text-[#faf9f5]">
+                  <div className="flex items-center justify-between bg-white dark:bg-[#131b2e] p-3 rounded-lg border border-[#e2e8f0] dark:border-[#1e293b]">
+                    <span className="font-mono text-sm font-bold text-[#0f172a] dark:text-[#f8fafc]">
                       {ffType === 'JK' ? 'Input K' : 'Input R'}
                     </span>
                     <button
                       onClick={() => setFfInput2(prev => prev === 1 ? 0 : 1)}
-                      className={`px-3.5 py-1.5 rounded-lg font-mono font-bold text-xs ${
-                        ffInput2 === 1 ? 'bg-[#cc785c] text-white' : 'bg-[#efe9de] dark:bg-[#252320] text-[#6c6a64]'
+                      className={`px-3.5 py-1.5 rounded-lg font-mono font-bold text-xs cursor-pointer transition ${
+                        ffInput2 === 1 
+                          ? 'bg-[#0066cc] text-white shadow-sm' 
+                          : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
                       }`}
                     >
                       {ffInput2}
@@ -696,43 +820,43 @@ export const SimulatorsView: React.FC = () => {
                 <div className="pt-2">
                   <button
                     onClick={triggerClockPulse}
-                    className="w-full py-3 px-4 rounded-xl bg-[#cc785c] hover:bg-[#a9583e] text-white font-bold text-sm shadow-md shadow-[#cc785c]/20 active:scale-95 transition-all flex items-center justify-center space-x-2"
+                    className="w-full py-3 px-4 rounded-xl bg-[#0066cc] hover:bg-[#0052a3] text-white font-bold text-sm shadow-md shadow-[#0066cc]/20 active:scale-95 transition-all flex items-center justify-center space-x-2 cursor-pointer"
                   >
                     <Play className="w-4 h-4 fill-white" />
                     <span>ส่งสัญญาณ Clock Edge (CLK ↑)</span>
                   </button>
-                  <div className="text-center text-xs text-[#8e8b82] font-mono mt-2">
+                  <div className="text-center text-xs text-[#94a3b8] font-mono mt-2">
                     จังหวะ Clock Pulse ที่: {clockCount}
                   </div>
                 </div>
               </div>
 
               {/* State Output Display */}
-              <div className="bg-[#f5f0e8] dark:bg-[#181715] p-5 rounded-xl border border-[#e6dfd8] dark:border-[#252320] flex flex-col justify-between">
+              <div className="bg-[#f8fafc] dark:bg-[#0b0f19] p-5 rounded-xl border border-[#e2e8f0] dark:border-[#1e293b] flex flex-col justify-between">
                 <div>
-                  <h3 className="text-xs font-mono font-semibold uppercase tracking-wider text-[#6c6a64] dark:text-[#8e8b82] mb-4">
+                  <h3 className="text-xs font-mono font-semibold uppercase tracking-wider text-[#64748b] dark:text-[#94a3b8] mb-4">
                     สถานะปัจจุบันของฟลิปฟลอป (Current State)
                   </h3>
                   
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-[#faf9f5] dark:bg-[#1f1e1b] p-4 rounded-xl border border-[#e6dfd8] dark:border-[#252320] text-center">
-                      <div className="text-xs font-mono text-[#6c6a64] dark:text-[#8e8b82]">เอาต์พุต Q</div>
-                      <div className={`text-4xl font-bold font-mono mt-1 ${ffQ === 1 ? 'text-[#5db872]' : 'text-[#8e8b82]'}`}>
+                    <div className="bg-white dark:bg-[#131b2e] p-4 rounded-xl border border-[#e2e8f0] dark:border-[#1e293b] text-center">
+                      <div className="text-xs font-mono text-[#64748b] dark:text-[#94a3b8]">เอาต์พุต Q</div>
+                      <div className={`text-4xl font-bold font-mono mt-1 ${ffQ === 1 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}`}>
                         {ffQ}
                       </div>
                     </div>
-                    <div className="bg-[#faf9f5] dark:bg-[#1f1e1b] p-4 rounded-xl border border-[#e6dfd8] dark:border-[#252320] text-center">
-                      <div className="text-xs font-mono text-[#6c6a64] dark:text-[#8e8b82]">เอาต์พุต Q' (Invert)</div>
-                      <div className={`text-4xl font-bold font-mono mt-1 ${ffQ === 0 ? 'text-[#5db872]' : 'text-[#8e8b82]'}`}>
+                    <div className="bg-white dark:bg-[#131b2e] p-4 rounded-xl border border-[#e2e8f0] dark:border-[#1e293b] text-center">
+                      <div className="text-xs font-mono text-[#64748b] dark:text-[#94a3b8]">เอาต์พุต Q' (Invert)</div>
+                      <div className={`text-4xl font-bold font-mono mt-1 ${ffQ === 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}`}>
                         {ffQ === 1 ? 0 : 1}
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-4 p-3 rounded-lg bg-[#efe9de] dark:bg-[#252320] text-xs space-y-1">
-                  <div className="text-[#3d3d3a] dark:text-[#faf9f5]">
-                    <span className="font-semibold">โหมดการทำงาน:</span>{' '}
+                <div className="mt-4 p-3 rounded-lg bg-[#f1f5f9] dark:bg-[#1e293b] text-xs space-y-1">
+                  <div className="text-[#334155] dark:text-[#cbd5e1]">
+                    <span className="font-semibold text-[#0f172a] dark:text-[#f8fafc]">โหมดการทำงาน:</span>{' '}
                     {ffType === 'JK' && (
                       ffInput1 === 0 && ffInput2 === 0 ? 'คงค่าเดิม (Hold: Q ไม่เปลี่ยน)' :
                       ffInput1 === 0 && ffInput2 === 1 ? 'รีเซ็ต (Reset: Q กลายเป็น 0)' :
@@ -749,19 +873,19 @@ export const SimulatorsView: React.FC = () => {
               </div>
 
               {/* History Waveform Trace */}
-              <div className="bg-[#f5f0e8] dark:bg-[#181715] p-5 rounded-xl border border-[#e6dfd8] dark:border-[#252320]">
-                <h3 className="text-xs font-mono font-semibold uppercase tracking-wider text-[#6c6a64] dark:text-[#8e8b82] mb-3">
+              <div className="bg-[#f8fafc] dark:bg-[#0b0f19] p-5 rounded-xl border border-[#e2e8f0] dark:border-[#1e293b]">
+                <h3 className="text-xs font-mono font-semibold uppercase tracking-wider text-[#64748b] dark:text-[#94a3b8] mb-3">
                   ประวัติการเปลี่ยนสถานะ (Timing History)
                 </h3>
                 <div className="space-y-1.5 font-mono text-xs max-h-48 overflow-y-auto pr-1">
                   {ffHistory.slice().reverse().map((h, i) => (
                     <div 
                       key={i} 
-                      className="p-2 rounded bg-[#faf9f5] dark:bg-[#1f1e1b] border border-[#e6dfd8] dark:border-[#252320] flex items-center justify-between"
+                      className="p-2 rounded bg-white dark:bg-[#131b2e] border border-[#e2e8f0] dark:border-[#1e293b] flex items-center justify-between"
                     >
-                      <span className="text-[#8e8b82]">CLK #{h.step}</span>
-                      <span className="text-[#cc785c]">{h.inputs}</span>
-                      <span className="font-bold text-[#5db872]">Q = {h.q}</span>
+                      <span className="text-[#64748b] dark:text-[#94a3b8]">CLK #{h.step}</span>
+                      <span className="text-[#0066cc] dark:text-[#38bdf8] font-medium">{h.inputs}</span>
+                      <span className="font-bold text-emerald-600 dark:text-emerald-400">Q = {h.q}</span>
                     </div>
                   ))}
                 </div>
@@ -775,18 +899,18 @@ export const SimulatorsView: React.FC = () => {
       {/* TAB 4: WATER PUMP FSM */}
       {activeSimulatorTab === 'fsm' && (
         <div className="space-y-6">
-          <div className="bg-[#faf9f5] dark:bg-[#1f1e1b] border border-[#e6dfd8] dark:border-[#252320] rounded-2xl p-6 shadow-sm">
+          <div className="bg-white dark:bg-[#131b2e] border border-[#e2e8f0] dark:border-[#1e293b] rounded-2xl p-6 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
               <div>
                 <div className="flex items-center space-x-2">
-                  <span className="px-2 py-0.5 rounded text-xs font-mono font-bold bg-[#efe9de] dark:bg-[#252320] text-[#cc785c] border border-[#e6dfd8] dark:border-[#3d3d3a]">
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-[#0066cc]/10 dark:bg-[#0066cc]/20 text-[#0066cc] dark:text-[#38bdf8] border border-[#0066cc]/20">
                     โจทย์ข้อสอบจริง สไลด์หน้า 151-163
                   </span>
                 </div>
-                <h2 className="font-serif text-xl text-[#141413] dark:text-[#faf9f5] mt-1">
+                <h2 className="font-heading font-extrabold text-xl text-[#0f172a] dark:text-[#f8fafc] mt-1.5">
                   ระบบควบคุมปั๊มน้ำอัตโนมัติด้วย Finite State Machine (Moore)
                 </h2>
-                <p className="text-xs text-[#6c6a64] dark:text-[#8e8b82]">
+                <p className="text-xs text-[#64748b] dark:text-[#94a3b8] mt-0.5">
                   เซ็นเซอร์ระดับน้ำล่าง (a) และบน (b) ควบคุมปั๊มน้ำ (y) พร้อมวิเคราะห์รหัสใน ROM
                 </p>
               </div>
@@ -794,115 +918,67 @@ export const SimulatorsView: React.FC = () => {
               <div className="flex items-center space-x-2">
                 <button
                   onClick={() => setWaterLevel(10)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#efe9de] dark:bg-[#252320] text-[#3d3d3a] dark:text-[#faf9f5] border border-[#e6dfd8] dark:border-[#3d3d3a]"
+                  className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#f1f5f9] dark:bg-[#1e293b] hover:bg-slate-200 dark:hover:bg-slate-700 text-[#334155] dark:text-[#f8fafc] border border-[#e2e8f0] dark:border-[#334155] transition cursor-pointer"
                 >
                   น้ำแห้ง (Drain)
                 </button>
                 <button
                   onClick={() => setWaterLevel(90)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#efe9de] dark:bg-[#252320] text-[#3d3d3a] dark:text-[#faf9f5] border border-[#e6dfd8] dark:border-[#3d3d3a]"
+                  className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#f1f5f9] dark:bg-[#1e293b] hover:bg-slate-200 dark:hover:bg-slate-700 text-[#334155] dark:text-[#f8fafc] border border-[#e2e8f0] dark:border-[#334155] transition cursor-pointer"
                 >
                   น้ำเต็ม (Fill)
                 </button>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
               
-              {/* Left: Water Tank Graphic */}
-              <div className="lg:col-span-5 bg-[#f5f0e8] dark:bg-[#181715] p-6 rounded-2xl border border-[#e6dfd8] dark:border-[#252320] flex flex-col justify-between">
-                <div>
-                  <h3 className="text-xs font-mono font-semibold uppercase tracking-wider text-[#6c6a64] dark:text-[#8e8b82] mb-4 flex items-center justify-between">
-                    <span>ถังพักน้ำจำลอง (Water Tank)</span>
-                    <span className="text-[#cc785c] font-mono">{waterLevel}%</span>
-                  </h3>
-
-                  <div className="relative h-64 w-full bg-[#efe9de] dark:bg-[#252320] rounded-2xl border-2 border-[#e6dfd8] dark:border-[#3d3d3a] overflow-hidden shadow-inner">
-                    <div 
-                      className="absolute bottom-0 left-0 right-0 bg-[#5db8a6]/70 transition-all duration-300 rounded-b-xl"
-                      style={{ height: `${waterLevel}%` }}
-                    />
-
-                    <div className="absolute top-[25%] left-0 right-0 border-b border-dashed border-[#c64545]/60 flex items-center justify-between px-3">
-                      <span className="text-xs font-mono text-[#c64545] bg-[#faf9f5]/90 dark:bg-[#181715]/90 px-1.5 py-0.5 rounded border border-[#c64545]/40">
-                        เซ็นเซอร์ b (บน): {sensorB ? 'จุ่มน้ำ (1)' : 'ไม่จุ่มน้ำ (0)'}
-                      </span>
-                      <span className={`w-3 h-3 rounded-full ${sensorB ? 'bg-[#c64545]' : 'bg-[#8e8b82]'}`} />
-                    </div>
-
-                    <div className="absolute bottom-[30%] left-0 right-0 border-b border-dashed border-[#e8a55a]/60 flex items-center justify-between px-3">
-                      <span className="text-xs font-mono text-[#e8a55a] bg-[#faf9f5]/90 dark:bg-[#181715]/90 px-1.5 py-0.5 rounded border border-[#e8a55a]/40">
-                        เซ็นเซอร์ a (ล่าง): {sensorA ? 'จุ่มน้ำ (1)' : 'ไม่จุ่มน้ำ (0)'}
-                      </span>
-                      <span className={`w-3 h-3 rounded-full ${sensorA ? 'bg-[#e8a55a]' : 'bg-[#8e8b82]'}`} />
-                    </div>
-                  </div>
-
-                  <div className="mt-4 space-y-1">
-                    <div className="flex justify-between text-xs text-[#6c6a64] dark:text-[#8e8b82]">
-                      <span>ปรับระดับน้ำด้วยตนเอง:</span>
-                      <span className="font-mono">{waterLevel}%</span>
-                    </div>
-                    <input
-                      type="range"
-                      min={5}
-                      max={95}
-                      value={waterLevel}
-                      onChange={(e) => setWaterLevel(parseInt(e.target.value))}
-                      className="w-full accent-[#cc785c] cursor-pointer"
-                    />
-                  </div>
-                </div>
-
-                <div className={`mt-4 p-3.5 rounded-xl border flex items-center justify-between transition-all ${
-                  pumpOutput === 1 
-                    ? 'bg-[#5db872]/15 border-[#5db872]/40 text-[#5db872]' 
-                    : 'bg-[#c64545]/15 border-[#c64545]/40 text-[#c64545]'
-                }`}>
-                  <div className="flex items-center space-x-2">
-                    <Droplets className={`w-5 h-5 ${pumpOutput === 1 ? 'animate-pulse text-[#5db872]' : 'text-[#c64545]'}`} />
-                    <span className="text-sm font-bold">
-                      สถานะปั๊มน้ำ (y): {pumpOutput === 1 ? 'กำลังสูบน้ำเข้าถัง (ON)' : 'ปิดการทำงาน (OFF)'}
-                    </span>
-                  </div>
-                  <span className="text-lg font-mono font-bold">y = {pumpOutput}</span>
-                </div>
+              {/* Left: 3D Water Tank Simulation */}
+              <div className="lg:col-span-6">
+                <WaterTank3D
+                  waterLevel={waterLevel}
+                  setWaterLevel={setWaterLevel}
+                  fsmState={fsmState}
+                  pumpOutput={pumpOutput}
+                  sensorA={sensorA}
+                  sensorB={sensorB}
+                />
               </div>
 
               {/* Right: Moore FSM States & ROM Table */}
-              <div className="lg:col-span-7 bg-[#f5f0e8] dark:bg-[#181715] p-6 rounded-2xl border border-[#e6dfd8] dark:border-[#252320] space-y-5">
+              <div className="lg:col-span-6 bg-[#f8fafc] dark:bg-[#0b0f19] p-6 rounded-2xl border border-[#e2e8f0] dark:border-[#1e293b] space-y-5">
                 <div>
-                  <h3 className="text-xs font-mono font-semibold uppercase tracking-wider text-[#6c6a64] dark:text-[#8e8b82] mb-3">
+                  <h3 className="text-xs font-mono font-semibold uppercase tracking-wider text-[#64748b] dark:text-[#94a3b8] mb-3">
                     แผนภาพสถานะแบบ MOORE (State Diagram)
                   </h3>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className={`p-4 rounded-xl border transition-all ${
                       fsmState === 0 
-                        ? 'bg-[#efe9de] dark:bg-[#252320] border-[#cc785c] shadow-sm' 
-                        : 'bg-[#faf9f5] dark:bg-[#1f1e1b] border-[#e6dfd8] dark:border-[#252320] opacity-60'
+                        ? 'bg-[#0066cc]/10 dark:bg-[#0066cc]/20 border-[#0066cc] shadow-sm' 
+                        : 'bg-white dark:bg-[#131b2e] border-[#e2e8f0] dark:border-[#1e293b] opacity-60'
                     }`}>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-mono font-bold text-[#cc785c]">State 0</span>
-                        <span className="text-xs px-2 py-0.5 rounded bg-[#faf9f5] dark:bg-[#181715] text-[#cc785c] font-mono border border-[#e6dfd8] dark:border-[#252320]">y = 1</span>
+                        <span className="text-xs font-mono font-bold text-[#0066cc] dark:text-[#38bdf8]">State 0</span>
+                        <span className="text-xs px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-mono font-bold border border-emerald-500/20">y = 1</span>
                       </div>
-                      <h4 className="text-sm font-bold text-[#141413] dark:text-[#faf9f5]">สถานะเปิดปั๊มน้ำ</h4>
-                      <p className="text-xs text-[#6c6a64] dark:text-[#8e8b82] mt-1">
+                      <h4 className="text-sm font-bold text-[#0f172a] dark:text-[#f8fafc]">สถานะเปิดปั๊มน้ำ</h4>
+                      <p className="text-xs text-[#64748b] dark:text-[#94a3b8] mt-1">
                         จะเปลี่ยนไป State 1 เมื่อเซ็นเซอร์ a=1 และ b=1 (น้ำเต็มถังแล้ว)
                       </p>
                     </div>
 
                     <div className={`p-4 rounded-xl border transition-all ${
                       fsmState === 1 
-                        ? 'bg-[#efe9de] dark:bg-[#252320] border-[#cc785c] shadow-sm' 
-                        : 'bg-[#faf9f5] dark:bg-[#1f1e1b] border-[#e6dfd8] dark:border-[#252320] opacity-60'
+                        ? 'bg-[#0066cc]/10 dark:bg-[#0066cc]/20 border-[#0066cc] shadow-sm' 
+                        : 'bg-white dark:bg-[#131b2e] border-[#e2e8f0] dark:border-[#1e293b] opacity-60'
                     }`}>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-mono font-bold text-[#cc785c]">State 1</span>
-                        <span className="text-xs px-2 py-0.5 rounded bg-[#faf9f5] dark:bg-[#181715] text-[#c64545] font-mono border border-[#e6dfd8] dark:border-[#252320]">y = 0</span>
+                        <span className="text-xs font-mono font-bold text-[#0066cc] dark:text-[#38bdf8]">State 1</span>
+                        <span className="text-xs px-2 py-0.5 rounded bg-rose-500/10 text-rose-600 dark:text-rose-400 font-mono font-bold border border-rose-500/20">y = 0</span>
                       </div>
-                      <h4 className="text-sm font-bold text-[#141413] dark:text-[#faf9f5]">สถานะปิดปั๊มน้ำ</h4>
-                      <p className="text-xs text-[#6c6a64] dark:text-[#8e8b82] mt-1">
+                      <h4 className="text-sm font-bold text-[#0f172a] dark:text-[#f8fafc]">สถานะปิดปั๊มน้ำ</h4>
+                      <p className="text-xs text-[#64748b] dark:text-[#94a3b8] mt-1">
                         จะเปลี่ยนไป State 0 เมื่อเซ็นเซอร์ a=0 และ b=0 (น้ำแห้งต่ำกว่า a)
                       </p>
                     </div>
@@ -910,23 +986,23 @@ export const SimulatorsView: React.FC = () => {
                 </div>
 
                 <div>
-                  <h3 className="text-xs font-mono font-semibold uppercase tracking-wider text-[#6c6a64] dark:text-[#8e8b82] mb-2">
+                  <h3 className="text-xs font-mono font-semibold uppercase tracking-wider text-[#64748b] dark:text-[#94a3b8] mb-2">
                     ตารางข้อมูลใน ROM (ROM Content Lookup Table)
                   </h3>
                   
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs font-mono border-collapse">
                       <thead>
-                        <tr className="bg-[#efe9de] dark:bg-[#252320] text-[#6c6a64] dark:text-[#8e8b82] border-b border-[#e6dfd8] dark:border-[#252320]">
-                          <th className="p-2">ROM Address (S, a, b)</th>
-                          <th className="p-2">Present State</th>
-                          <th className="p-2">Sensor a</th>
-                          <th className="p-2">Sensor b</th>
-                          <th className="p-2">Next State</th>
-                          <th className="p-2">Output y</th>
+                        <tr className="bg-[#f1f5f9] dark:bg-[#1e293b] text-[#475569] dark:text-[#94a3b8] border-b border-[#e2e8f0] dark:border-[#1e293b]">
+                          <th className="p-2.5">ROM Address (S, a, b)</th>
+                          <th className="p-2.5">Present State</th>
+                          <th className="p-2.5">Sensor a</th>
+                          <th className="p-2.5">Sensor b</th>
+                          <th className="p-2.5">Next State</th>
+                          <th className="p-2.5">Output y</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-[#e6dfd8] dark:divide-[#252320]">
+                      <tbody className="divide-y divide-[#e2e8f0] dark:divide-[#1e293b]">
                         {[
                           { addr: '000', s: 0, a: 0, b: 0, next: 0, y: 1 },
                           { addr: '010', s: 0, a: 1, b: 0, next: 0, y: 1 },
@@ -940,15 +1016,17 @@ export const SimulatorsView: React.FC = () => {
                             <tr 
                               key={row.addr}
                               className={`transition-colors ${
-                                isCurrentRow ? 'bg-[#efe9de] dark:bg-[#252320] text-[#cc785c] font-bold' : 'text-[#6c6a64] dark:text-[#a09d96]'
+                                isCurrentRow 
+                                  ? 'bg-[#0066cc]/15 text-[#0066cc] dark:text-[#38bdf8] font-bold' 
+                                  : 'text-[#475569] dark:text-[#94a3b8] hover:bg-slate-100/50 dark:hover:bg-slate-800/40'
                               }`}
                             >
-                              <td className="p-2">{row.addr} {isCurrentRow && '👉 (Active)'}</td>
-                              <td className="p-2">{row.s}</td>
-                              <td className="p-2">{row.a}</td>
-                              <td className="p-2">{row.b}</td>
-                              <td className="p-2 text-[#5db8a6]">{row.next}</td>
-                              <td className="p-2 font-bold">{row.y}</td>
+                              <td className="p-2.5">{row.addr} {isCurrentRow && '👉 (Active)'}</td>
+                              <td className="p-2.5">{row.s}</td>
+                              <td className="p-2.5">{row.a}</td>
+                              <td className="p-2.5">{row.b}</td>
+                              <td className="p-2.5 text-[#0066cc] dark:text-[#38bdf8]">{row.next}</td>
+                              <td className="p-2.5 font-bold">{row.y}</td>
                             </tr>
                           );
                         })}

@@ -4,10 +4,20 @@ dist-ssr/
 *.local
 *.log
 .DS_Store
+.agents/*
+.codex/*
+claude/*
+DigitalSlide/
 
 # Scratch / extraction scripts
 extract-slides.mjs
 extract-slides.cjs
 analyze-curriculum.cjs
+test-*.cjs
+*.png
+stitch-*.html
+check-profiles.cjs
+inspect-stitch.cjs
+verify-toggle.cjs
 Digital Logic Slide/*_text.txt
 slides_analysis.json

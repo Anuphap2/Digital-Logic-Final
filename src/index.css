@@ -1,39 +1,43 @@
 @import "tailwindcss";
 @import "katex/dist/katex.min.css";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   :root {
-    --claude-primary: #cc785c;
-    --claude-primary-active: #a9583e;
-    --claude-ink: #141413;
-    --claude-body: #3d3d3a;
-    --claude-canvas: #faf9f5;
-    --claude-surface-soft: #f5f0e8;
-    --claude-surface-card: #efe9de;
-    --claude-surface-dark: #181715;
-    --claude-surface-dark-elevated: #252320;
-    --claude-surface-dark-soft: #1f1e1b;
-    --claude-hairline: #e6dfd8;
+    --stitch-primary: #0066cc;
+    --stitch-primary-hover: #0052a3;
+    --stitch-secondary: #7c3aed;
+    --stitch-success: #10b981;
+    --stitch-error: #ef4444;
+    --stitch-canvas: #f8f9fe;
+    --stitch-surface: #ffffff;
+    --stitch-surface-subtle: #f1f5f9;
+    --stitch-border: #e2e8f0;
+    --stitch-text-primary: #0f172a;
+    --stitch-text-secondary: #475569;
+    --stitch-text-muted: #94a3b8;
   }
 
   body {
-    font-family: 'Inter', 'Prompt', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'Outfit', 'Prompt', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     letter-spacing: -0.01em;
+    background-color: var(--stitch-canvas);
+    color: var(--stitch-text-primary);
   }
 
-  /* Display headlines use Claude's signature editorial serif */
-  h1, h2, .font-serif {
-    font-family: 'Newsreader', 'EB Garamond', 'Times New Roman', Georgia, serif;
+  /* Modern tech headlines */
+  h1, h2, h3, h4, .font-heading {
+    font-family: 'Outfit', 'Prompt', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     letter-spacing: -0.02em;
-    font-weight: 400;
   }
   
   code, pre, .font-mono {
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
   }
 }
 
-/* KaTeX custom styling to match Claude warmth */
+/* KaTeX custom styling for crisp formula readability */
 .katex {
   font-size: 1.05em;
   text-rendering: auto;
@@ -61,7 +65,7 @@
   }
 }
 
-/* Claude scrollbars */
+/* Modern sleek scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -70,9 +74,10 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(142, 139, 130, 0.3);
+  background: var(--stitch-text-muted);
   border-radius: 9999px;
+  opacity: 0.4;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(142, 139, 130, 0.5);
+  background: var(--stitch-text-secondary);
 }

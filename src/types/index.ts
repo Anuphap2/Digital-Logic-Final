@@ -60,3 +60,4 @@ export interface ExamAttempt {
 }
 
 export type ActiveTab = 'dashboard' | 'classroom' | 'simulators' | 'cheatsheet' | 'exam';
+export type SimulatorType = 'gates' | 'kmap' | 'flipflop' | 'fsm';

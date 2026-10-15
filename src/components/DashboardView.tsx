@@ -1,6 +1,7 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
 import { CURRICULUM_DATA } from '../data/curriculumData';
+import { HeroCircuitSandbox } from './HeroCircuitSandbox';
 import { 
   PlayCircle, 
   CheckCircle, 
@@ -10,12 +11,19 @@ import {
   ArrowRight, 
   Sliders, 
   FileText, 
-  Sparkles,
   Layers,
   ChevronRight,
   TrendingUp,
-  Cpu
+  Cpu,
+  Printer,
+  Sparkles,
+  Zap,
+  Droplets,
+  Box,
+  Flame,
+  CheckCircle2
 } from 'lucide-react';
+import { ChapterId } from '../types';
 
 export const DashboardView: React.FC = () => {
   const { 
@@ -55,371 +63,581 @@ export const DashboardView: React.FC = () => {
     ? Math.max(...examAttempts.map(a => a.percentage)) 
     : null;
 
+  const chaptersMeta: { 
+    id: ChapterId; 
+    num: string; 
+    title: string; 
+    desc: string; 
+    stats: { done: number; total: number; pct: number };
+    tag: string;
+    keyConcepts: string[];
+    simTab?: 'gates' | 'kmap' | 'flipflop' | 'fsm';
+    simLabel?: string;
+  }[] = [
+    {
+      id: 'ch3',
+      num: 'บทที่ 3',
+      title: 'Digital Circuit & Data Conversion',
+      desc: 'สัญญาณแอนะล็อก vs ดิจิทัล, Logic Gates, Half/Full Adder, Subtractor, Decoder, MUX, DAC (R-2R Ladder) และ ADC',
+      stats: ch3Stats,
+      tag: 'สัดส่วนสอบ ~30%',
+      keyConcepts: ['Noise Margin', 'Full Adder (Cout=AB+Cin(A⊕B))', 'R-2R DAC Ladder', 'ADC Flash vs SAR'],
+      simTab: 'gates',
+      simLabel: 'แล็บ Logic Gates & Adder',
+    },
+    {
+      id: 'ch4',
+      num: 'บทที่ 4',
+      title: 'Circuit Simplification & K-Map',
+      desc: 'พีชคณิตบูลีน, ทฤษฎีเดอมอร์แกน (De Morgan), K-Map 2-4 ตัวแปร และการจัดกลุ่ม Don\'t Care (X) เพื่อลดต้นทุนอุปกรณ์',
+      stats: ch4Stats,
+      tag: 'สัดส่วนสอบ ~30%',
+      keyConcepts: ['De Morgan: (A+B)\'=A\'B\'', 'Gray Code 00,01,11,10', 'Don\'t Care X optimization', 'Group 1, 2, 4, 8, 16'],
+      simTab: 'kmap',
+      simLabel: 'แล็บ K-Map Visual Solver',
+    },
+    {
+      id: 'ch5',
+      num: 'บทที่ 5',
+      title: 'Sequential Circuit & FSM Control',
+      desc: 'Latch vs Flip-Flop (SR, D, JK, T), Clock Trigger, Waveform Timing Diagram, ตาราง Excitation และข้อสอบ FSM ถังน้ำ',
+      stats: ch5Stats,
+      tag: 'สัดส่วนสอบ ~40% (ข้อสอบเด็ด)',
+      keyConcepts: ['Edge-Triggered Clock', 'JK Toggle & Race Condition', 'Excitation Tables', 'Water Pump ROM FSM'],
+      simTab: 'fsm',
+      simLabel: 'แล็บ FSM ถังน้ำ (ข้อสอบจริง)',
+    },
+  ];
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fadeIn">
       
-      {/* Editorial Hero Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-[#efe9de] dark:bg-[#1f1e1b] border border-[#e6dfd8] dark:border-[#252320] p-6 md:p-10 shadow-sm">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="space-y-3">
-            <div className="flex items-center space-x-2.5">
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold bg-[#faf9f5] dark:bg-[#181715] text-[#cc785c] border border-[#e6dfd8] dark:border-[#252320]">
-                CS121 Final Preparation
-              </span>
-              <span className="text-xs text-[#6c6a64] dark:text-[#a09d96] flex items-center gap-1 font-mono">
-                <Clock className="w-3.5 h-3.5 text-[#cc785c]" />
-                สอบปลายภาค: พก A4 เข้าได้ 1 แผ่น + เครื่องคิดเลข
-              </span>
-            </div>
-            <h1 className="font-serif text-3xl sm:text-4xl text-[#141413] dark:text-[#faf9f5] tracking-tight">
-              เตรียมสอบปลายภาค Digital Logic & Smart Device
-            </h1>
-            <p className="text-sm sm:text-base text-[#3d3d3a] dark:text-[#a09d96] max-w-2xl leading-relaxed">
-              ครอบคลุมบทที่ 3 (Digital Circuit), บทที่ 4 (Simplification & K-Map) และบทที่ 5 (Sequential Circuit & FSM) ตามแนวการสอนของ ดร. ปวีณ เขื่อนแก้ว มหาวิทยาลัยแม่โจ้
-            </p>
-          </div>
-
-          {/* Claude Style Coral Resume Button */}
-          <div className="shrink-0 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            <button
-              onClick={resumeLearning}
-              className="group relative inline-flex items-center justify-center space-x-3 px-6 py-4 rounded-xl text-base font-semibold text-white bg-[#cc785c] hover:bg-[#a9583e] shadow-md shadow-[#cc785c]/20 transition-all duration-200 active:scale-[0.98]"
-            >
-              <PlayCircle className="w-5 h-5 text-white/90 group-hover:scale-110 transition-transform" />
-              <div className="text-left">
-                <div className="text-xs font-normal text-white/80 uppercase tracking-wider">เรียนต่อจากเดิม</div>
-                <div className="text-sm font-semibold truncate max-w-[180px] sm:max-w-[220px]">
-                  {currentLesson.title}
-                </div>
-              </div>
-              <ArrowRight className="w-4 h-4 ml-1 text-white/80 group-hover:translate-x-1 transition-transform" />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Bento Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+      {/* Stitch-Inspired Hero & Live Interactive Sandbox (12 cols) */}
+      <section className="relative overflow-hidden rounded-3xl bg-white dark:bg-[#131b2e] border border-[#e2e8f0] dark:border-[#1e293b] p-6 sm:p-8 lg:p-10 shadow-sm">
         
-        {/* Bento 1: Progress Card (2 cols) */}
-        <div className="lg:col-span-2 rounded-2xl bg-[#faf9f5] dark:bg-[#1f1e1b] border border-[#e6dfd8] dark:border-[#252320] p-6 flex flex-col justify-between shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="font-serif text-xl text-[#141413] dark:text-[#faf9f5]">ความคืบหน้าการอ่านหนังสือ</h2>
-              <p className="text-xs text-[#6c6a64] dark:text-[#8e8b82]">เรียนจบแล้ว {completedCount} จาก {totalLessons} บทเรียน</p>
-            </div>
-            <div className="text-right">
-              <span className="text-3xl font-mono font-bold text-[#cc785c]">{progressPercent}%</span>
-            </div>
-          </div>
+        {/* Ambient Subtle Glows */}
+        <div className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#0066cc]/10 dark:bg-[#0066cc]/15 rounded-full blur-3xl" />
+        <div className="pointer-events-none absolute top-40 right-10 w-[350px] h-[250px] bg-[#7c3aed]/10 dark:bg-[#7c3aed]/15 rounded-full blur-2xl" />
 
-          <div className="space-y-3">
-            <div className="h-2.5 w-full bg-[#e6dfd8] dark:bg-[#252320] rounded-full overflow-hidden flex">
-              <div 
-                className="bg-[#cc785c] h-full transition-all duration-500" 
-                style={{ width: `${(ch3Stats.done / totalLessons) * 100}%` }}
-                title={`บทที่ 3: ${ch3Stats.done}/${ch3Stats.total}`}
-              />
-              <div 
-                className="bg-[#5db8a6] h-full transition-all duration-500" 
-                style={{ width: `${(ch4Stats.done / totalLessons) * 100}%` }}
-                title={`บทที่ 4: ${ch4Stats.done}/${ch4Stats.total}`}
-              />
-              <div 
-                className="bg-[#e8a55a] h-full transition-all duration-500" 
-                style={{ width: `${(ch5Stats.done / totalLessons) * 100}%` }}
-                title={`บทที่ 5: ${ch5Stats.done}/${ch5Stats.total}`}
-              />
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          
+          {/* Left Column: Copy & CTAs (7 cols) */}
+          <div className="lg:col-span-7 space-y-4">
+            
+            {/* Overline Badge */}
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#f1f5f9] dark:bg-[#1e293b] border border-[#e2e8f0] dark:border-[#334155] shadow-xs">
+              <span className="w-2 h-2 rounded-full bg-[#10b981] animate-pulse" />
+              <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#0066cc] dark:text-[#38bdf8]">
+                Interactive Digital Circuit Lab · CS121
+              </span>
             </div>
 
-            <div className="grid grid-cols-3 gap-2 pt-2 text-xs">
-              <div className="bg-[#f5f0e8] dark:bg-[#181715] p-2.5 rounded-xl border border-[#e6dfd8] dark:border-[#252320]">
-                <div className="flex items-center space-x-1.5 text-[#cc785c] font-medium mb-1">
-                  <span className="w-2 h-2 rounded-full bg-[#cc785c]" />
-                  <span>บทที่ 3 (Circuit)</span>
-                </div>
-                <div className="font-mono text-[#3d3d3a] dark:text-[#faf9f5]">{ch3Stats.done}/{ch3Stats.total} ({ch3Stats.pct}%)</div>
-              </div>
-              <div className="bg-[#f5f0e8] dark:bg-[#181715] p-2.5 rounded-xl border border-[#e6dfd8] dark:border-[#252320]">
-                <div className="flex items-center space-x-1.5 text-[#5db8a6] font-medium mb-1">
-                  <span className="w-2 h-2 rounded-full bg-[#5db8a6]" />
-                  <span>บทที่ 4 (K-Map)</span>
-                </div>
-                <div className="font-mono text-[#3d3d3a] dark:text-[#faf9f5]">{ch4Stats.done}/{ch4Stats.total} ({ch4Stats.pct}%)</div>
-              </div>
-              <div className="bg-[#f5f0e8] dark:bg-[#181715] p-2.5 rounded-xl border border-[#e6dfd8] dark:border-[#252320]">
-                <div className="flex items-center space-x-1.5 text-[#e8a55a] font-medium mb-1">
-                  <span className="w-2 h-2 rounded-full bg-[#e8a55a]" />
-                  <span>บทที่ 5 (FSM)</span>
-                </div>
-                <div className="font-mono text-[#3d3d3a] dark:text-[#faf9f5]">{ch5Stats.done}/{ch5Stats.total} ({ch5Stats.pct}%)</div>
-              </div>
+            <h1 className="font-heading text-3xl sm:text-4xl lg:text-5xl text-[#0f172a] dark:text-[#f8fafc] tracking-tight leading-tight font-bold">
+              เข้าใจ Digital Logic ได้ง่ายและสนุก <br className="hidden sm:inline" />
+              <span className="text-[#0066cc] dark:text-[#38bdf8]">
+                ผ่านการลงมือต่อวงจรจริง
+              </span>
+            </h1>
+
+            <p className="text-sm sm:text-base text-[#475569] dark:text-[#94a3b8] leading-relaxed max-w-xl">
+              เปลี่ยนเรื่องตรรกศาสตร์ที่ซับซ้อนให้เห็นภาพชัดเจน ทดลองสับสวิตช์ 0 และ 1 เห็นการไหลของสัญญาณ ตารางความจริง และโมเดล 3D เสมือนจริง ตรงตามข้อสอบ ดร. ปวีณ เขื่อนแก้ว ม.แม่โจ้
+            </p>
+
+            {/* CTAs */}
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+              <button
+                onClick={resumeLearning}
+                className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-[#0066cc] hover:bg-[#0052a3] text-white font-semibold text-sm shadow-md shadow-[#0066cc]/25 active:scale-[0.98] transition-all cursor-pointer"
+              >
+                <PlayCircle className="w-4 h-4 text-white" />
+                <span>เรียนต่อทันที ({currentLesson.title.substring(0, 24)}...)</span>
+                <ArrowRight className="w-4 h-4 ml-0.5" />
+              </button>
+
+              <button
+                onClick={() => {
+                  setActiveSimulatorTab('gates');
+                  setCurrentTab('simulators');
+                }}
+                className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-white dark:bg-[#131b2e] hover:bg-[#f1f5f9] dark:hover:bg-[#1e293b] text-[#0f172a] dark:text-[#f8fafc] font-semibold text-sm border border-[#e2e8f0] dark:border-[#334155] shadow-xs transition-all cursor-pointer"
+              >
+                <Sliders className="w-4 h-4 text-[#0066cc]" />
+                <span>เข้าสู่ห้องแล็บจำลอง (Logic Lab)</span>
+              </button>
             </div>
+
+            {/* Trust Metadata / Exam Rules */}
+            <div className="flex flex-wrap items-center gap-3 pt-2 text-xs text-[#64748b] dark:text-[#94a3b8]">
+              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#f8fafc] dark:bg-[#1e293b] border border-[#e2e8f0] dark:border-[#334155]">
+                <FileText className="w-3.5 h-3.5 text-[#0066cc]" />
+                <span>พก A4 เข้าสอบได้ 1 แผ่น (เขียนได้ 2 หน้า)</span>
+              </span>
+              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#f8fafc] dark:bg-[#1e293b] border border-[#e2e8f0] dark:border-[#334155]">
+                <Cpu className="w-3.5 h-3.5 text-[#10b981]" />
+                <span>นำเครื่องคิดเลขเข้าห้องสอบได้</span>
+              </span>
+            </div>
+
           </div>
+
+          {/* Right Column: Interactive Hero Mini Sandbox (5 cols) */}
+          <div className="lg:col-span-5 w-full">
+            <HeroCircuitSandbox />
+          </div>
+
         </div>
 
-        {/* Bento 2: Mock Exam High Score */}
-        <div className="rounded-2xl bg-[#faf9f5] dark:bg-[#1f1e1b] border border-[#e6dfd8] dark:border-[#252320] p-6 flex flex-col justify-between shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-[#e8a55a] flex items-center gap-1.5">
-              <Award className="w-4 h-4" /> คะแนนทดสอบ
-            </span>
-            <span className="text-xs text-[#6c6a64] dark:text-[#8e8b82] font-mono">
-              {examAttempts.length} ครั้งที่ทำ
-            </span>
-          </div>
+      </section>
 
-          <div className="my-3">
-            {bestExamScore !== null ? (
-              <div>
-                <div className="flex items-baseline space-x-2">
-                  <span className="text-3xl font-mono font-bold text-[#5db872]">{bestExamScore}%</span>
-                  <span className="text-xs text-[#6c6a64] dark:text-[#8e8b82]">คะแนนสูงสุด</span>
-                </div>
-                <p className="text-xs text-[#6c6a64] dark:text-[#8e8b82] mt-1">
-                  {bestExamScore >= 80 ? '🌟 พร้อมสอบเกรด A!' : bestExamScore >= 60 ? '👍 ผ่านเกณฑ์ ลองฝึกอีกนิด!' : '⚠️ ควรอ่านทวนและทำซ้ำ'}
-                </p>
+      {/* Real-time Stats & Vitals Row (Stitch-inspired) */}
+      <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        
+        {/* Metric 1: Completed Lessons & Circular Ring */}
+        <div className="bg-white dark:bg-[#131b2e] rounded-2xl p-5 border border-[#e2e8f0] dark:border-[#1e293b] shadow-xs flex items-center justify-between">
+          <div className="flex items-center gap-3.5">
+            <div className="relative w-12 h-12 shrink-0 flex items-center justify-center">
+              <svg className="w-12 h-12 -rotate-90" viewBox="0 0 36 36">
+                <path className="text-[#f1f5f9] dark:text-[#1e293b]" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="3.5" />
+                <path className="text-[#0066cc]" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeDasharray={`${progressPercent}, 100`} strokeLinecap="round" strokeWidth="3.5" />
+              </svg>
+              <span className="absolute font-mono text-xs font-bold text-[#0066cc]">
+                {progressPercent}%
+              </span>
+            </div>
+            <div>
+              <div className="text-xs uppercase font-mono font-bold tracking-wider text-[#64748b] dark:text-[#94a3b8]">
+                ความคืบหน้ารวม
               </div>
-            ) : (
-              <div>
-                <div className="text-xl font-serif text-[#141413] dark:text-[#faf9f5]">ยังไม่เริ่มสอบ</div>
-                <p className="text-xs text-[#6c6a64] dark:text-[#8e8b82] mt-1">คลังข้อสอบ 30 ข้อตรงตามแนวสอบปลายภาค</p>
+              <div className="font-heading text-xl font-bold text-[#0f172a] dark:text-[#f8fafc] mt-0.5">
+                {completedCount} <span className="text-xs font-mono font-normal text-[#64748b] dark:text-[#94a3b8]">/ {totalLessons} บทเรียน</span>
               </div>
-            )}
+            </div>
           </div>
+          <span className="text-xs px-2.5 py-1 rounded-full font-mono bg-[#f1f5f9] dark:bg-[#1e293b] text-[#0066cc] dark:text-[#38bdf8] border border-[#e2e8f0] dark:border-[#334155] font-semibold">
+            {completedCount === totalLessons ? 'สำเร็จครบแล้ว' : 'กำลังลุยต่อ'}
+          </span>
+        </div>
 
+        {/* Metric 2: Circuit Accuracy & Streak */}
+        <div className="bg-white dark:bg-[#131b2e] rounded-2xl p-5 border border-[#e2e8f0] dark:border-[#1e293b] shadow-xs flex items-center justify-between">
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center text-xl shrink-0 shadow-xs border border-amber-500/20">
+              🔥
+            </div>
+            <div>
+              <div className="text-xs uppercase font-mono font-bold tracking-wider text-[#64748b] dark:text-[#94a3b8]">
+                วินัยการฝึกต่อเนื่อง
+              </div>
+              <div className="font-heading text-xl font-bold text-[#0f172a] dark:text-[#f8fafc] mt-0.5">
+                7 วัน <span className="text-xs font-mono font-normal text-[#10b981]">(Daily Streak)</span>
+              </div>
+            </div>
+          </div>
+          <span className="text-xs px-2.5 py-1 rounded-full font-mono bg-[#10b981]/15 text-[#10b981] font-bold">
+            ฟอร์มดีมาก!
+          </span>
+        </div>
+
+        {/* Metric 3: Exam Readiness & Best Score */}
+        <div className="bg-white dark:bg-[#131b2e] rounded-2xl p-5 border border-[#e2e8f0] dark:border-[#1e293b] shadow-xs flex items-center justify-between">
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-2xl bg-[#7c3aed]/10 text-[#7c3aed] flex items-center justify-center shrink-0 shadow-xs border border-[#7c3aed]/20">
+              <Award className="w-6 h-6 text-[#7c3aed]" />
+            </div>
+            <div>
+              <div className="text-xs uppercase font-mono font-bold tracking-wider text-[#64748b] dark:text-[#94a3b8]">
+                คะแนนจำลองสอบ Final
+              </div>
+              <div className="font-heading text-xl font-bold text-[#0f172a] dark:text-[#f8fafc] mt-0.5">
+                {bestExamScore !== null ? `${bestExamScore}%` : 'พร้อมเริ่มสอบ'}
+              </div>
+            </div>
+          </div>
           <button
             onClick={() => setCurrentTab('exam')}
-            className="w-full py-2.5 px-3 rounded-lg bg-[#efe9de] dark:bg-[#252320] hover:bg-[#e8e0d2] text-[#cc785c] border border-[#e6dfd8] dark:border-[#3d3d3a] text-xs font-semibold flex items-center justify-center space-x-1.5 transition"
+            className="text-xs px-3 py-1.5 rounded-lg font-mono font-semibold bg-[#7c3aed]/10 text-[#7c3aed] hover:bg-[#7c3aed]/20 border border-[#7c3aed]/20 dark:border-[#7c3aed]/40 transition cursor-pointer"
           >
-            <span>ทำข้อสอบจำลอง Final</span>
-            <ChevronRight className="w-3.5 h-3.5" />
+            เริ่มทดสอบ
           </button>
         </div>
 
-        {/* Bento 3: A4 Cheat Sheet */}
-        <div className="rounded-2xl bg-[#faf9f5] dark:bg-[#1f1e1b] border border-[#e6dfd8] dark:border-[#252320] p-6 flex flex-col justify-between shadow-sm">
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold uppercase tracking-wider text-[#cc785c] flex items-center gap-1.5">
-                <FileText className="w-4 h-4" /> เอกสารหน้าเดียว
-              </span>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-[#efe9de] dark:bg-[#252320] text-[#cc785c] border border-[#e6dfd8] dark:border-[#3d3d3a] font-mono">
-                1 แผ่น A4
-              </span>
-            </div>
-            <h3 className="font-serif text-lg text-[#141413] dark:text-[#faf9f5]">สรุปสูตร A4 พกเข้าห้องสอบ</h3>
-            <p className="text-xs text-[#6c6a64] dark:text-[#8e8b82] mt-1">
-              สูตร 555, ตาราง Excitation, กฎเดอมอร์แกน และรหัส K-Map จัดหน้าพร้อมพิมพ์
-            </p>
-          </div>
+      </section>
 
-          <button
-            onClick={() => setCurrentTab('cheatsheet')}
-            className="w-full mt-4 py-2.5 px-3 rounded-lg bg-[#efe9de] dark:bg-[#252320] hover:bg-[#e8e0d2] text-[#cc785c] border border-[#e6dfd8] dark:border-[#3d3d3a] text-xs font-semibold flex items-center justify-center space-x-1.5 transition"
-          >
-            <span>เปิดสรุปสูตร A4 (พร้อมพิมพ์)</span>
-            <ChevronRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      </div>
-
-      {/* Interactive Simulators Quick Launch Bar */}
-      <div className="rounded-2xl bg-[#faf9f5] dark:bg-[#1f1e1b] border border-[#e6dfd8] dark:border-[#252320] p-6 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
-          <div>
-            <h2 className="font-serif text-xl text-[#141413] dark:text-[#faf9f5] flex items-center gap-2">
-              <Sliders className="w-5 h-5 text-[#cc785c]" />
-              แล็บจำลองวงจร Interactive (Hands-on Simulators)
-            </h2>
-            <p className="text-xs text-[#6c6a64] dark:text-[#8e8b82]">ทดลองปรับค่าตรรกะและสังเกตผลทันทีเพื่อความเข้าใจที่ลึกซึ้ง</p>
-          </div>
-          <button
-            onClick={() => setCurrentTab('simulators')}
-            className="text-xs text-[#cc785c] hover:underline flex items-center gap-1 font-medium transition self-start sm:self-auto"
-          >
-            <span>เปิดหน้าแล็บเต็มจอ</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-          <div 
-            onClick={() => { setActiveSimulatorTab('gates'); setCurrentTab('simulators'); }}
-            className="group p-4 rounded-xl bg-[#f5f0e8] dark:bg-[#181715] border border-[#e6dfd8] dark:border-[#252320] hover:border-[#cc785c] cursor-pointer transition-all duration-200"
-          >
-            <div className="w-8 h-8 rounded-lg bg-[#efe9de] dark:bg-[#252320] text-[#cc785c] flex items-center justify-center mb-2.5">
-              <Cpu className="w-4 h-4" />
-            </div>
-            <h4 className="text-sm font-semibold text-[#141413] dark:text-[#faf9f5] group-hover:text-[#cc785c] transition-colors">Logic Gate & Adders</h4>
-            <p className="text-xs text-[#6c6a64] dark:text-[#8e8b82] mt-1">ทดสอบเกตทั้ง 7 และวงจรบวกเลข Half/Full Adder</p>
-          </div>
-
-          <div 
-            onClick={() => { setActiveSimulatorTab('kmap'); setCurrentTab('simulators'); }}
-            className="group p-4 rounded-xl bg-[#f5f0e8] dark:bg-[#181715] border border-[#e6dfd8] dark:border-[#252320] hover:border-[#cc785c] cursor-pointer transition-all duration-200"
-          >
-            <div className="w-8 h-8 rounded-lg bg-[#efe9de] dark:bg-[#252320] text-[#5db8a6] flex items-center justify-center mb-2.5">
-              <Layers className="w-4 h-4" />
-            </div>
-            <h4 className="text-sm font-semibold text-[#141413] dark:text-[#faf9f5] group-hover:text-[#cc785c] transition-colors">K-Map Solver (2-4 ตัวแปร)</h4>
-            <p className="text-xs text-[#6c6a64] dark:text-[#8e8b82] mt-1">คลิกใส่ 0, 1, X โปรแกรมจับกลุ่มและลดรูปให้อัตโนมัติ</p>
-          </div>
-
-          <div 
-            onClick={() => { setActiveSimulatorTab('flipflop'); setCurrentTab('simulators'); }}
-            className="group p-4 rounded-xl bg-[#f5f0e8] dark:bg-[#181715] border border-[#e6dfd8] dark:border-[#252320] hover:border-[#cc785c] cursor-pointer transition-all duration-200"
-          >
-            <div className="w-8 h-8 rounded-lg bg-[#efe9de] dark:bg-[#252320] text-[#5db872] flex items-center justify-center mb-2.5">
-              <Sliders className="w-4 h-4" />
-            </div>
-            <h4 className="text-sm font-semibold text-[#141413] dark:text-[#faf9f5] group-hover:text-[#cc785c] transition-colors">Flip-Flop & Excitation Lab</h4>
-            <p className="text-xs text-[#6c6a64] dark:text-[#8e8b82] mt-1">กด Clock Pulse และสลับโหมด SR, D, JK, T Flip-Flop</p>
-          </div>
-
-          <div 
-            onClick={() => { setActiveSimulatorTab('fsm'); setCurrentTab('simulators'); }}
-            className="group p-4 rounded-xl bg-[#f5f0e8] dark:bg-[#181715] border border-[#e6dfd8] dark:border-[#252320] hover:border-[#cc785c] cursor-pointer transition-all duration-200"
-          >
-            <div className="w-8 h-8 rounded-lg bg-[#efe9de] dark:bg-[#252320] text-[#e8a55a] flex items-center justify-center mb-2.5">
-              <Sparkles className="w-4 h-4" />
-            </div>
-            <h4 className="text-sm font-semibold text-[#141413] dark:text-[#faf9f5] group-hover:text-[#cc785c] transition-colors">Water Pump FSM (ข้อสอบจริง)</h4>
-            <p className="text-xs text-[#6c6a64] dark:text-[#8e8b82] mt-1">จำลองระดับน้ำ เซ็นเซอร์ a, b และคำนวณรหัส ROM</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Chapters Catalog */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="font-serif text-xl text-[#141413] dark:text-[#faf9f5] flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-[#cc785c]" />
-            สารบัญบทเรียนและหัวข้อสำคัญ
-          </h2>
-          <span className="text-xs text-[#6c6a64] dark:text-[#8e8b82]">คลิกที่บทเรียนเพื่อเริ่มอ่าน</span>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Main 2-Column Responsive Bento Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        {/* Left Column: Chapters & Simulators (8 cols) */}
+        <div className="lg:col-span-8 space-y-8">
           
-          {/* Chapter 3 Card */}
-          <div className="rounded-2xl bg-[#faf9f5] dark:bg-[#1f1e1b] border border-[#e6dfd8] dark:border-[#252320] p-6 flex flex-col justify-between shadow-sm">
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-mono font-semibold text-[#cc785c] bg-[#efe9de] dark:bg-[#252320] px-2 py-0.5 rounded border border-[#e6dfd8] dark:border-[#3d3d3a]">
-                  Chapter 3
-                </span>
-                <span className="text-xs text-[#6c6a64] dark:text-[#8e8b82] font-mono">
-                  {ch3Stats.done}/{ch3Stats.total} ผ่านแล้ว
-                </span>
+          {/* Visual Chapter Roadmap Section (Stitch Pathway) */}
+          <section className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-[#ede9fe] dark:bg-[#7c3aed]/20 text-[#7c3aed] dark:text-[#c4b5fd] uppercase tracking-wider">
+                    Learning Pathway
+                  </span>
+                  <span className="text-xs text-[#64748b] dark:text-[#94a3b8]">
+                    3 โมดูลสู่เกรด A Digital Logic
+                  </span>
+                </div>
+                <h2 className="font-heading text-2xl sm:text-3xl font-bold text-[#0f172a] dark:text-[#f8fafc] tracking-tight">
+                  เส้นทางการเรียนรู้สู่ความเชี่ยวชาญ
+                </h2>
               </div>
-              <h3 className="font-serif text-lg text-[#141413] dark:text-[#faf9f5] mb-1">Digital Circuit & Adders</h3>
-              <p className="text-xs text-[#6c6a64] dark:text-[#8e8b82] mb-4">
-                สัญญาณแอนะล็อก vs ดิจิทัล, สัญญาณรบกวน, ลอจิกเกตทั้ง 7, Half Adder, Full Adder
-              </p>
-              
-              <div className="space-y-2">
-                {ch3Lessons.map(l => {
-                  const done = completedLessons.includes(l.id);
-                  return (
-                    <div
-                      key={l.id}
-                      onClick={() => { setSelectedLessonId(l.id); setCurrentTab('classroom'); }}
-                      className={`p-2.5 rounded-lg text-xs flex items-center justify-between cursor-pointer transition ${
-                        done ? 'bg-[#5db872]/15 text-[#3d3d3a] dark:text-[#faf9f5] border border-[#5db872]/30' : 'bg-[#f5f0e8] dark:bg-[#181715] text-[#3d3d3a] dark:text-[#a09d96] hover:bg-[#efe9de] dark:hover:bg-[#252320]'
-                      }`}
-                    >
-                      <div className="flex items-center space-x-2 truncate">
-                        <CheckCircle className={`w-3.5 h-3.5 shrink-0 ${done ? 'text-[#5db872]' : 'text-[#8e8b82]'}`} />
-                        <span className="truncate">{l.title}</span>
-                      </div>
-                      <ChevronRight className="w-3.5 h-3.5 text-[#8e8b82] shrink-0 ml-1" />
-                    </div>
-                  );
-                })}
+              <div className="flex items-center gap-2 text-xs font-mono text-[#64748b] dark:text-[#94a3b8]">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#10b981]" />
+                <span>สำเร็จแล้ว</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-[#0066cc] ml-1.5" />
+                <span>กำลังเรียน</span>
               </div>
             </div>
-          </div>
 
-          {/* Chapter 4 Card */}
-          <div className="rounded-2xl bg-[#faf9f5] dark:bg-[#1f1e1b] border border-[#e6dfd8] dark:border-[#252320] p-6 flex flex-col justify-between shadow-sm">
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-mono font-semibold text-[#5db8a6] bg-[#efe9de] dark:bg-[#252320] px-2 py-0.5 rounded border border-[#e6dfd8] dark:border-[#3d3d3a]">
-                  Chapter 4
-                </span>
-                <span className="text-xs text-[#6c6a64] dark:text-[#8e8b82] font-mono">
-                  {ch4Stats.done}/{ch4Stats.total} ผ่านแล้ว
-                </span>
-              </div>
-              <h3 className="font-serif text-lg text-[#141413] dark:text-[#faf9f5] mb-1">Circuit Simplification</h3>
-              <p className="text-xs text-[#6c6a64] dark:text-[#8e8b82] mb-4">
-                พีชคณิตบูลีน, ทฤษฎีเดอมอร์แกน, SOP, POS, K-Map 2-4 ตัวแปร, Don't Care, Universal Gates
-              </p>
-              
-              <div className="space-y-2">
-                {ch4Lessons.map(l => {
-                  const done = completedLessons.includes(l.id);
-                  return (
-                    <div
-                      key={l.id}
-                      onClick={() => { setSelectedLessonId(l.id); setCurrentTab('classroom'); }}
-                      className={`p-2.5 rounded-lg text-xs flex items-center justify-between cursor-pointer transition ${
-                        done ? 'bg-[#5db872]/15 text-[#3d3d3a] dark:text-[#faf9f5] border border-[#5db872]/30' : 'bg-[#f5f0e8] dark:bg-[#181715] text-[#3d3d3a] dark:text-[#a09d96] hover:bg-[#efe9de] dark:hover:bg-[#252320]'
-                      }`}
-                    >
-                      <div className="flex items-center space-x-2 truncate">
-                        <CheckCircle className={`w-3.5 h-3.5 shrink-0 ${done ? 'text-[#5db872]' : 'text-[#8e8b82]'}`} />
-                        <span className="truncate">{l.title}</span>
-                      </div>
-                      <ChevronRight className="w-3.5 h-3.5 text-[#8e8b82] shrink-0 ml-1" />
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
+            {/* Roadmap Cards Track */}
+            <div className="flex flex-col gap-4 relative">
+              {chaptersMeta.map((ch, idx) => {
+                const isActive = ch.id === currentLesson.chapterId;
+                const isCompleted = ch.stats.done === ch.stats.total;
 
-          {/* Chapter 5 Card */}
-          <div className="rounded-2xl bg-[#faf9f5] dark:bg-[#1f1e1b] border border-[#e6dfd8] dark:border-[#252320] p-6 flex flex-col justify-between shadow-sm">
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-mono font-semibold text-[#e8a55a] bg-[#efe9de] dark:bg-[#252320] px-2 py-0.5 rounded border border-[#e6dfd8] dark:border-[#3d3d3a]">
-                  Chapter 5
-                </span>
-                <span className="text-xs text-[#6c6a64] dark:text-[#8e8b82] font-mono">
-                  {ch5Stats.done}/{ch5Stats.total} ผ่านแล้ว
-                </span>
-              </div>
-              <h3 className="font-serif text-lg text-[#141413] dark:text-[#faf9f5] mb-1">Sequential Circuit & FSM</h3>
-              <p className="text-xs text-[#6c6a64] dark:text-[#8e8b82] mb-4">
-                555 Timer, SR Latch, D/JK/T Flip-Flop, Excitation Table, Counters, Moore/Mealy FSM
-              </p>
-              
-              <div className="space-y-2">
-                {ch5Lessons.map(l => {
-                  const done = completedLessons.includes(l.id);
-                  return (
-                    <div
-                      key={l.id}
-                      onClick={() => { setSelectedLessonId(l.id); setCurrentTab('classroom'); }}
-                      className={`p-2.5 rounded-lg text-xs flex items-center justify-between cursor-pointer transition ${
-                        done ? 'bg-[#5db872]/15 text-[#3d3d3a] dark:text-[#faf9f5] border border-[#5db872]/30' : 'bg-[#f5f0e8] dark:bg-[#181715] text-[#3d3d3a] dark:text-[#a09d96] hover:bg-[#efe9de] dark:hover:bg-[#252320]'
-                      }`}
-                    >
-                      <div className="flex items-center space-x-2 truncate">
-                        <CheckCircle className={`w-3.5 h-3.5 shrink-0 ${done ? 'text-[#5db872]' : 'text-[#8e8b82]'}`} />
-                        <span className="truncate">{l.title}</span>
+                return (
+                  <div
+                    key={ch.id}
+                    className={`relative rounded-3xl p-6 sm:p-7 border transition-all duration-200 ${
+                      isActive 
+                        ? 'bg-white dark:bg-[#131b2e] border-[#0066cc] shadow-md ring-1 ring-[#0066cc]/20' 
+                        : 'bg-white dark:bg-[#131b2e] border-[#e2e8f0] dark:border-[#1e293b] shadow-xs hover:border-[#0066cc]/40'
+                    }`}
+                  >
+                    {/* Active Pulsing Indicator Badge */}
+                    {isActive && (
+                      <div className="absolute -top-3 left-6 px-3 py-0.5 rounded-full bg-[#0066cc] text-white text-xs font-mono font-bold shadow-sm flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                        <span>กำลังเรียนรู้ในปัจจุบัน</span>
                       </div>
-                      <ChevronRight className="w-3.5 h-3.5 text-[#8e8b82] shrink-0 ml-1" />
+                    )}
+
+                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+                      
+                      <div className="flex items-start gap-4">
+                        {/* Module Icon Container */}
+                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-sm ${
+                          ch.id === 'ch3' 
+                            ? 'bg-[#cce5ff] text-[#006194]' 
+                            : ch.id === 'ch4' 
+                            ? 'bg-[#e9ddff] text-[#6b38d4]' 
+                            : 'bg-[#bbf7d0] text-[#006947]'
+                        }`}>
+                          {ch.id === 'ch3' && <Zap className="w-7 h-7" />}
+                          {ch.id === 'ch4' && <Layers className="w-7 h-7" />}
+                          {ch.id === 'ch5' && <Droplets className="w-7 h-7" />}
+                        </div>
+
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-[#f1f5f9] dark:bg-[#1e293b] text-[#475569] dark:text-[#94a3b8] border border-[#e2e8f0] dark:border-[#334155]">
+                              Module 0{idx + 1}
+                            </span>
+                            <span className={`text-xs font-mono font-bold flex items-center gap-1 ${
+                              isCompleted ? 'text-[#10b981]' : isActive ? 'text-[#0066cc]' : 'text-[#64748b]'
+                            }`}>
+                              {isCompleted ? (
+                                <>
+                                  <CheckCircle2 className="w-4 h-4 text-[#10b981]" />
+                                  <span>สำเร็จครบ 100%</span>
+                                </>
+                              ) : (
+                                <span>ความคืบหน้า {ch.stats.pct}% ({ch.stats.done}/{ch.stats.total} บท)</span>
+                              )}
+                            </span>
+                            <span className="text-xs px-2 py-0.5 rounded-full font-mono bg-[#fef3c7] text-amber-800 dark:bg-[#1e293b] dark:text-amber-300">
+                              {ch.tag}
+                            </span>
+                          </div>
+
+                          <h3 className="font-heading text-lg sm:text-xl font-bold text-[#0f172a] dark:text-[#f8fafc]">
+                            {ch.title}
+                          </h3>
+                          <p className="text-xs sm:text-sm text-[#475569] dark:text-[#94a3b8] leading-relaxed max-w-xl">
+                            {ch.desc}
+                          </p>
+
+                          {/* Progress Bar Segment */}
+                          <div className="w-full max-w-md bg-[#f1f5f9] dark:bg-[#1e293b] h-2 rounded-full overflow-hidden mt-2">
+                            <div 
+                              className={`h-full rounded-full transition-all duration-500 ${
+                                isCompleted ? 'bg-[#10b981]' : 'bg-[#0066cc]'
+                              }`} 
+                              style={{ width: `${ch.stats.pct}%` }} 
+                            />
+                          </div>
+
+                          {/* Key Concepts Pills */}
+                          <div className="flex flex-wrap items-center gap-1.5 pt-2">
+                            {ch.keyConcepts.map((kc, kIdx) => (
+                              <span 
+                                key={kIdx}
+                                className="text-xs px-2 py-0.5 rounded bg-[#f8fafc] dark:bg-[#1e293b] text-[#64748b] dark:text-[#94a3b8] border border-[#e2e8f0] dark:border-[#334155] font-mono"
+                              >
+                                {kc}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Action Button */}
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto shrink-0 self-end md:self-center">
+                        <button
+                          onClick={() => {
+                            const firstLesson = CURRICULUM_DATA.find(l => l.chapterId === ch.id);
+                            if (firstLesson) setSelectedLessonId(firstLesson.id);
+                            setCurrentTab('classroom');
+                          }}
+                          className={`px-4 py-2.5 rounded-xl font-semibold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                            isActive
+                              ? 'bg-[#0066cc] hover:bg-[#0052a3] text-white shadow-md active:scale-95'
+                              : 'bg-[#f1f5f9] dark:bg-[#1e293b] hover:bg-[#e2e8f0] text-[#0f172a] dark:text-[#f8fafc] border border-[#e2e8f0] dark:border-[#334155]'
+                          }`}
+                        >
+                          <span>{isCompleted ? 'ทบทวนเนื้อหา' : isActive ? 'เรียนต่อทันที' : 'เริ่มโมดูลนี้'}</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+
+                        {ch.simTab && (
+                          <button
+                            onClick={() => {
+                              setActiveSimulatorTab(ch.simTab!);
+                              setCurrentTab('simulators');
+                            }}
+                            className="px-3 py-2 rounded-xl text-xs font-medium text-[#475569] dark:text-[#94a3b8] bg-[#f8fafc] dark:bg-[#1e293b] hover:bg-[#f1f5f9] border border-[#e2e8f0] dark:border-[#334155] flex items-center justify-center gap-1.5 transition cursor-pointer"
+                            title="เปิดเครื่องมือจำลอง"
+                          >
+                            <Sliders className="w-3.5 h-3.5 text-[#0066cc]" />
+                            <span className="hidden sm:inline">แล็บจำลอง</span>
+                          </button>
+                        )}
+                      </div>
+
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+                );
+              })}
             </div>
-          </div>
+          </section>
+
+          {/* Interactive Simulators Spotlight */}
+          <section className="space-y-4">
+            <div>
+              <h2 className="font-heading text-2xl font-bold text-[#0f172a] dark:text-[#f8fafc] tracking-tight">
+                แล็บจำลองวงจร Interactive 4 รูปแบบ
+              </h2>
+              <p className="text-xs text-[#64748b] dark:text-[#94a3b8]">
+                ฝึกกดสวิตช์ ดูผลลัพธ์จริง เพื่อสร้างความเข้าใจเชิงลึกก่อนเข้าห้องสอบ
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              
+              {/* Lab 1 */}
+              <div 
+                onClick={() => {
+                  setActiveSimulatorTab('gates');
+                  setCurrentTab('simulators');
+                }}
+                className="group cursor-pointer rounded-2xl bg-white dark:bg-[#131b2e] border border-[#e2e8f0] dark:border-[#1e293b] p-5 shadow-xs hover:border-[#0066cc] dark:hover:border-[#38bdf8] transition-colors"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="w-8 h-8 rounded-lg bg-[#0066cc]/10 text-[#0066cc] dark:text-[#38bdf8] flex items-center justify-center">
+                    <Zap className="w-4 h-4" />
+                  </div>
+                  <span className="text-xs font-mono px-2 py-0.5 rounded bg-[#f1f5f9] dark:bg-[#1e293b] text-[#0066cc] dark:text-[#38bdf8]">
+                    Ch.3
+                  </span>
+                </div>
+                <h3 className="font-heading text-base text-[#0f172a] dark:text-[#f8fafc] group-hover:text-[#0066cc] dark:group-hover:text-[#38bdf8] transition-colors font-bold">
+                  Logic Gates & Full Adder
+                </h3>
+                <p className="text-xs text-[#64748b] dark:text-[#94a3b8] mt-1 line-clamp-2">
+                  สลับสถานะ A, B, Cin เพื่อดูผลบวก Sum และ Carry Out พร้อมสัญลักษณ์วงจร
+                </p>
+              </div>
+
+              {/* Lab 2 */}
+              <div 
+                onClick={() => {
+                  setActiveSimulatorTab('kmap');
+                  setCurrentTab('simulators');
+                }}
+                className="group cursor-pointer rounded-2xl bg-white dark:bg-[#131b2e] border border-[#e2e8f0] dark:border-[#1e293b] p-5 shadow-xs hover:border-[#0066cc] dark:hover:border-[#38bdf8] transition-colors"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="w-8 h-8 rounded-lg bg-[#7c3aed]/10 text-[#7c3aed] dark:text-[#c4b5fd] flex items-center justify-center">
+                    <Layers className="w-4 h-4" />
+                  </div>
+                  <span className="text-xs font-mono px-2 py-0.5 rounded bg-[#f1f5f9] dark:bg-[#1e293b] text-[#7c3aed] dark:text-[#c4b5fd]">
+                    Ch.4
+                  </span>
+                </div>
+                <h3 className="font-heading text-base text-[#0f172a] dark:text-[#f8fafc] group-hover:text-[#0066cc] dark:group-hover:text-[#38bdf8] transition-colors font-bold">
+                  K-Map 2-4 Vars Solver
+                </h3>
+                <p className="text-xs text-[#64748b] dark:text-[#94a3b8] mt-1 line-clamp-2">
+                  คลิกตาราง Gray Code สลับ 0, 1, X และดูผลลดรูปสมการแบบเรียลไทม์
+                </p>
+              </div>
+
+              {/* Lab 3 */}
+              <div 
+                onClick={() => {
+                  setActiveSimulatorTab('flipflop');
+                  setCurrentTab('simulators');
+                }}
+                className="group cursor-pointer rounded-2xl bg-white dark:bg-[#131b2e] border border-[#e2e8f0] dark:border-[#1e293b] p-5 shadow-xs hover:border-[#0066cc] dark:hover:border-[#38bdf8] transition-colors"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                    <Cpu className="w-4 h-4" />
+                  </div>
+                  <span className="text-xs font-mono px-2 py-0.5 rounded bg-[#f1f5f9] dark:bg-[#1e293b] text-amber-600 dark:text-amber-400">
+                    Ch.5
+                  </span>
+                </div>
+                <h3 className="font-heading text-base text-[#0f172a] dark:text-[#f8fafc] group-hover:text-[#0066cc] dark:group-hover:text-[#38bdf8] transition-colors font-bold">
+                  Flip-Flop & Waveform Lab
+                </h3>
+                <p className="text-xs text-[#64748b] dark:text-[#94a3b8] mt-1 line-clamp-2">
+                  กด Clock Pulse เพื่อสังเกต D, JK, T, SR และกราฟคลื่นเวลา (Timing Diagram)
+                </p>
+              </div>
+
+              {/* Lab 4 */}
+              <div 
+                onClick={() => {
+                  setActiveSimulatorTab('fsm');
+                  setCurrentTab('simulators');
+                }}
+                className="group cursor-pointer rounded-2xl bg-white dark:bg-[#131b2e] border border-[#e2e8f0] dark:border-[#1e293b] p-5 shadow-xs hover:border-[#0066cc] dark:hover:border-[#38bdf8] transition-colors"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="w-8 h-8 rounded-lg bg-[#10b981]/10 text-[#10b981] flex items-center justify-center">
+                    <Droplets className="w-4 h-4" />
+                  </div>
+                  <span className="text-xs font-mono px-2 py-0.5 rounded bg-[#f1f5f9] dark:bg-[#1e293b] text-[#10b981]">
+                    ข้อสอบ อ.ปวีณ
+                  </span>
+                </div>
+                <h3 className="font-heading text-base text-[#0f172a] dark:text-[#f8fafc] group-hover:text-[#0066cc] dark:group-hover:text-[#38bdf8] transition-colors font-bold">
+                  Water Pump FSM Simulator
+                </h3>
+                <p className="text-xs text-[#64748b] dark:text-[#94a3b8] mt-1 line-clamp-2">
+                  จำลองระดับน้ำในถัง เซนเซอร์ A/B และการทำงานของ ROM ควบคุมปั๊มน้ำ
+                </p>
+              </div>
+
+            </div>
+          </section>
 
         </div>
+
+        {/* Right Column: Exam Readiness & Fast Actions (4 cols) */}
+        <aside className="lg:col-span-4 space-y-6">
+          
+          {/* Exam Simulator Card */}
+          <div className="rounded-2xl bg-white dark:bg-[#131b2e] border border-[#e2e8f0] dark:border-[#1e293b] p-6 shadow-xs space-y-4">
+            <div className="flex items-center space-x-2.5">
+              <div className="w-9 h-9 rounded-xl bg-[#0066cc]/10 text-[#0066cc] dark:text-[#38bdf8] flex items-center justify-center">
+                <Award className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-heading text-lg text-[#0f172a] dark:text-[#f8fafc] font-bold">
+                  จำลองสอบ Final 30 ข้อ
+                </h3>
+                <p className="text-xs text-[#64748b] dark:text-[#94a3b8]">
+                  จับเวลา 45 นาที พร้อมวิเคราะห์จุดอ่อน
+                </p>
+              </div>
+            </div>
+
+            {bestExamScore !== null ? (
+              <div className="p-3 rounded-xl bg-[#f8fafc] dark:bg-[#1e293b] border border-[#e2e8f0] dark:border-[#334155] flex items-center justify-between">
+                <div>
+                  <div className="text-xs text-[#64748b] dark:text-[#94a3b8]">คะแนนสูงสุดที่คุณทำได้:</div>
+                  <div className="text-2xl font-mono font-bold text-[#0066cc] dark:text-[#38bdf8]">{bestExamScore}%</div>
+                </div>
+                <div className="text-right text-xs text-[#10b981] font-semibold">
+                  สอบไปแล้ว {examAttempts.length} ครั้ง
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-[#475569] dark:text-[#94a3b8] leading-relaxed">
+                ยังไม่ได้ลองทำข้อสอบจำลอง ทดสอบความพร้อมเพื่อดูจุดที่ยังต้องทบทวนเพิ่ม
+              </p>
+            )}
+
+            <button
+              onClick={() => setCurrentTab('exam')}
+              className="w-full py-3 px-4 rounded-xl text-xs font-semibold text-white bg-[#0066cc] hover:bg-[#0052a3] transition shadow-md shadow-[#0066cc]/25 text-center cursor-pointer"
+            >
+              เริ่มทำข้อสอบจำลองทันที
+            </button>
+          </div>
+
+          {/* 1-Click A4 Cheat Sheet Card */}
+          <div className="rounded-2xl bg-white dark:bg-[#131b2e] border border-[#e2e8f0] dark:border-[#1e293b] p-6 shadow-xs space-y-3">
+            <div className="flex items-center space-x-2.5">
+              <div className="w-9 h-9 rounded-xl bg-[#7c3aed]/10 text-[#7c3aed] dark:text-[#c4b5fd] flex items-center justify-center border border-[#7c3aed]/20">
+                <FileText className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-heading text-lg text-[#0f172a] dark:text-[#f8fafc] font-bold">
+                  สรุปสูตร A4 1 แผ่น
+                </h3>
+                <p className="text-xs text-[#64748b] dark:text-[#94a3b8]">
+                  ฟอร์แมตพิมพ์พอดีหน้ากระดาษ A4
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs text-[#475569] dark:text-[#94a3b8] leading-relaxed">
+              รวมกฎบูลีน, ตาราง Excitation ของ JK/D/T/SR Flip-Flop, สูตร R-2R Ladder, และกฎ De Morgan ไว้อย่างกระชับ
+            </p>
+
+            <button
+              onClick={() => setCurrentTab('cheatsheet')}
+              className="w-full py-2.5 px-4 rounded-xl text-xs font-semibold text-[#0f172a] dark:text-[#f8fafc] bg-[#f8fafc] dark:bg-[#1e293b] hover:bg-[#f1f5f9] hover:border-[#0066cc] border border-[#e2e8f0] dark:border-[#334155] transition flex items-center justify-center space-x-2 cursor-pointer"
+            >
+              <Printer className="w-4 h-4 text-[#0066cc]" />
+              <span>เปิดดูและสั่งพิมพ์ A4</span>
+            </button>
+          </div>
+
+          {/* Exam Strategy Checklist */}
+          <div className="rounded-2xl bg-white dark:bg-[#131b2e] border border-[#e2e8f0] dark:border-[#1e293b] p-6 shadow-xs space-y-3">
+            <h3 className="font-heading text-base text-[#0f172a] dark:text-[#f8fafc] font-bold">
+              ข้อควรระวังในห้องสอบ
+            </h3>
+            <ul className="space-y-2 text-xs text-[#475569] dark:text-[#94a3b8]">
+              <li className="flex items-start space-x-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#0066cc] mt-1.5 shrink-0" />
+                <span><strong>K-Map ลำดับบิต:</strong> ต้องเรียง Gray Code 00, 01, 11, 10 เสมอ (ห้าม 10 ก่อน 11)</span>
+              </li>
+              <li className="flex items-start space-x-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#0066cc] mt-1.5 shrink-0" />
+                <span><strong>Don't Care (X):</strong> วงเฉพาะเมื่อทำให้กลุ่ม 1 ใหญ่ขึ้น ถ้าวงแล้วไม่ได้ช่วย ไม่ต้องวง</span>
+              </li>
+              <li className="flex items-start space-x-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#0066cc] mt-1.5 shrink-0" />
+                <span><strong>SR Flip-Flop:</strong> ห้าม $S=1, R=1$ เพราะค่า $Q$ และ $Q'$ จะไม่เสถียร</span>
+              </li>
+              <li className="flex items-start space-x-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#0066cc] mt-1.5 shrink-0" />
+                <span><strong>วงจร FSM ถังน้ำ:</strong> มี 2 State ($S_0$ เติมน้ำ, $S_1$ ปล่อยน้ำ) ต้องจำตาราง ROM 8 บรรทัดให้แม่น</span>
+              </li>
+            </ul>
+          </div>
+
+        </aside>
+
       </div>
 
     </div>

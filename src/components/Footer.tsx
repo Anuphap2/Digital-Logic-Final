@@ -10,7 +10,7 @@ export const Footer: React.FC = () => {
   }
 
   return (
-    <footer className="no-print border-t border-[#e2e8f0] dark:border-[#1e293b] bg-white dark:bg-[#0b0f19] text-[#64748b] dark:text-[#94a3b8] py-12 mt-16 transition-colors">
+    <footer className="no-print print:hidden border-t border-[#e2e8f0] dark:border-[#1e293b] bg-white dark:bg-[#0b0f19] text-[#64748b] dark:text-[#94a3b8] py-12 mt-16 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center space-x-3">
